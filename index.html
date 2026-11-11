@@ -2,544 +2,664 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>เดินเล่นในโรงเรียน</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>เดินเล่นในโรงเรียน 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-html,body{width:100%;height:100%;overflow:hidden;font-family:'Itim',sans-serif;background:#bfe3ff;touch-action:none}
-canvas{display:block;touch-action:none}
-#hud{position:fixed;top:10px;left:10px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;z-index:5}
-.pill{background:#fff;border-radius:20px;padding:5px 14px;font-size:16px;border:2px solid #ffd166;box-shadow:0 2px 0 rgba(0,0,0,.15)}
-#minimap{position:fixed;top:10px;right:10px;width:130px;height:130px;border-radius:14px;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.25);z-index:5}
-#prompt{position:fixed;left:50%;bottom:160px;transform:translateX(-50%);background:rgba(0,0,0,.6);color:#fff;padding:6px 16px;border-radius:16px;font-size:16px;display:none;z-index:5;white-space:nowrap}
-#joy{position:fixed;left:24px;bottom:24px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.85);z-index:5;touch-action:none}
-#knob{position:absolute;left:32px;top:32px;width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);pointer-events:none}
-#act{position:fixed;right:24px;bottom:40px;width:96px;height:96px;border-radius:50%;border:none;background:#ffb703;color:#fff;font-family:inherit;font-size:20px;box-shadow:0 5px 0 #d48a00;z-index:5;opacity:.4}
-#act.on{opacity:1}
-#dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(90vw,380px);background:#fffaf0;border:4px solid #ffb703;border-radius:18px;padding:18px;z-index:10;display:none;text-align:center}
-#dialog h2{color:#e85d04;margin-bottom:8px}
-#dialog p{font-size:17px;line-height:1.55;margin-bottom:12px;white-space:pre-line}
-#dialog button{font-family:inherit;font-size:17px;border:none;border-radius:12px;padding:8px 16px;margin:4px;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.2)}
-#toast{position:fixed;top:22%;left:50%;transform:translate(-50%,-10px);background:#2a9d8f;color:#fff;padding:8px 18px;border-radius:16px;font-size:18px;opacity:0;transition:.3s;z-index:20;pointer-events:none;white-space:nowrap}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#aee0ff;font-family:'Itim',system-ui,sans-serif;color:#263238}
+body{-webkit-user-select:none;user-select:none}
+input,textarea,select{font-family:inherit;font-size:15px;-webkit-user-select:text;user-select:text}
+button{font-family:inherit;cursor:pointer;border:none}
+#game{position:fixed;inset:0;display:block;touch-action:none}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;background:#aee0ff;z-index:100;font-size:22px;color:#e85d04;padding:20px}
+#errBox{position:fixed;left:10px;right:10px;bottom:10px;background:#e63946;color:#fff;padding:10px 14px;border-radius:12px;z-index:300;display:none;font-size:14px;white-space:pre-wrap}
+
+#topbar{position:fixed;top:10px;left:10px;right:180px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;z-index:10;pointer-events:none}
+.row{display:flex;gap:6px;flex-wrap:wrap}
+#topbar>*{pointer-events:auto}
+.pill{background:#fff;border-radius:999px;padding:3px 12px;font-size:16px;box-shadow:0 2px 0 rgba(0,0,0,.12);border:2px solid #eee}
+.pill.gold{border-color:#ffd166}.pill.pink{border-color:#ffafcc}.pill.blue{border-color:#a8dadc}
+.chip{background:#fff;border-radius:999px;padding:5px 11px;font-size:14px;box-shadow:0 2px 0 rgba(0,0,0,.12)}
+.chip.hl{background:#fff3c4;border:2px solid #ffb703}
+.chip.off{opacity:.55}
+#nextMission{background:#fffdf6;border:2px dashed #ffb703;border-radius:12px;padding:3px 10px;font-size:14px;cursor:pointer;max-width:100%}
+#navBanner{display:none;align-items:center;gap:8px;background:#fff;border-radius:999px;padding:4px 5px 4px 12px;box-shadow:0 3px 8px rgba(0,0,0,.2);font-size:14px}
+#navBanner.show{display:flex}
+#navCancel{background:#e63946;color:#fff;border-radius:999px;padding:3px 10px;font-size:13px}
+#boost{display:none;background:#06d6a0;color:#fff;border-radius:999px;padding:3px 12px;font-size:14px}
+
+#minimap{position:fixed;top:10px;right:10px;width:160px;height:160px;border-radius:16px;border:3px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.25);z-index:10;cursor:pointer;background:#8fd16f}
+#mmHint{position:fixed;top:172px;right:10px;width:160px;text-align:center;font-size:12px;color:#fff;text-shadow:0 1px 3px #000;z-index:10;pointer-events:none}
+#fps{position:fixed;top:192px;right:10px;background:rgba(0,0,0,.6);color:#7CFC00;padding:2px 8px;border-radius:8px;font:13px monospace;z-index:10;display:none}
+
+#infoCard{position:fixed;left:50%;bottom:150px;transform:translate(-50%,20px);width:min(94vw,460px);max-height:42vh;overflow-y:auto;touch-action:pan-y;background:rgba(255,253,246,.97);border:3px solid #ffb703;border-radius:18px;padding:10px 14px;z-index:12;opacity:0;pointer-events:none;transition:.25s}
+#infoCard.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+#infoCard .head{display:flex;align-items:center;gap:8px;margin-bottom:4px;padding-right:24px}
+#infoIcon{font-size:26px}
+#infoTitle{color:#e85d04;font-size:20px}
+#infoText{font-size:15px;line-height:1.5;margin-bottom:8px}
+#infoBtns,#dBtns{display:flex;flex-wrap:wrap;gap:6px}
+#dBtns{justify-content:center}
+#infoClose{position:absolute;top:4px;right:10px;background:none;font-size:26px;color:#999}
+
+#toast{position:fixed;top:26%;left:50%;transform:translate(-50%,-10px);background:#2a9d8f;color:#fff;padding:8px 18px;border-radius:16px;font-size:17px;opacity:0;transition:.25s;z-index:80;pointer-events:none;max-width:94vw;text-align:center}
 #toast.show{opacity:1;transform:translate(-50%,0)}
-#start{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:30}
-#start .card{background:#fff;border-radius:20px;padding:22px;width:min(92vw,420px);text-align:center;line-height:1.6}
-#start h1{color:#e85d04;margin-bottom:6px}
-#start button{margin-top:12px;font-family:inherit;font-size:22px;border:none;border-radius:14px;padding:10px 30px;background:#ffb703;color:#fff;box-shadow:0 4px 0 #d48a00}
+
+#joy{position:fixed;left:22px;bottom:22px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.35);border:3px solid rgba(255,255,255,.85);z-index:10;touch-action:none}
+#knob{position:absolute;left:32px;top:32px;width:50px;height:50px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.25);pointer-events:none}
+@media (hover:hover) and (pointer:fine){#joy{display:none}}
+#actions{position:fixed;right:14px;bottom:22px;display:flex;gap:8px;z-index:10}
+.act{width:62px;height:62px;border-radius:50%;color:#fff;font-size:16px;box-shadow:0 5px 0 rgba(0,0,0,.2)}
+.act.yellow{background:#ffb703}.act.green{background:#2a9d8f}.act.blue{background:#3a86ff}
+.act.on{outline:4px solid #fff}
+
+.btn{color:#fff;border-radius:12px;padding:7px 13px;font-size:15px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
+.btn.green{background:#2a9d8f}.btn.orange{background:#ff8c42}.btn.red{background:#e63946}.btn.gray{background:#8d99ae}.btn.blue{background:#3a86ff}.btn.yellow{background:#ffb703}
+.btn.big{font-size:22px;padding:10px 34px;background:#ffb703;box-shadow:0 4px 0 #d48a00}
+
+.overlay{position:fixed;inset:0;background:rgba(10,20,40,.55);display:none;align-items:center;justify-content:center;z-index:40;padding:10px}
+.overlay.show{display:flex}
+.panel{background:#fffdf6;border-radius:20px;padding:14px;width:min(96vw,560px);max-height:94vh;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.3)}
+.phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.phead h2{color:#e85d04;font-size:22px}
+.close{background:#eee;width:36px;height:36px;border-radius:50%;font-size:22px;flex:none}
+.scroll{overflow-y:auto;touch-action:pan-y;min-height:0}
+.hint{font-size:14px;color:#666;margin-bottom:8px}
+
+.mapPanel{width:min(98vw,1080px)}
+.mapBody{display:flex;gap:12px;min-height:0;flex:1}
+#bigmap{width:min(76vh,62vw);height:min(76vh,62vw);border-radius:14px;border:3px solid #e9e1cf;cursor:crosshair;flex:none}
+#placeList{flex:1;display:flex;flex-direction:column;gap:6px;min-width:0}
+.prow{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #f1e6cc;border-radius:12px;padding:6px 8px;margin-bottom:6px}
+.prow.done{border-color:#a8dadc;background:#f1fbfb}
+.prow .ic{font-size:20px}.prow .nm{flex:1;font-size:15px;min-width:0}
+@media (max-width:760px){.mapBody{flex-direction:column}#bigmap{width:min(92vw,56vh);height:min(92vw,56vh);align-self:center}#placeList{max-height:28vh}}
+
+.dlg{text-align:center;width:min(92vw,440px)}
+#dText{white-space:pre-line;line-height:1.6;margin:6px 0 12px;font-size:17px}
+
+.setPanel{width:min(96vw,640px)}
+.tabs{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap}
+.tabs button{background:#f1e6cc;border-radius:10px;padding:5px 11px;font-size:14px}
+.tabs button.on{background:#ffb703;color:#fff}
+.tab{display:none}.tab.on{display:block}
+.tabBody{flex:1;padding-right:4px}
+.field{display:flex;flex-direction:column;gap:3px;margin-bottom:10px;font-size:14px}
+.field.check{flex-direction:row;align-items:center;gap:8px}
+.field input[type=checkbox]{width:20px;height:20px}
+.field input[type=text],.field input[type=number],.field textarea,.field select,.srow input[type=text],.srow input[type=number],.srow textarea,.srow select{border:2px solid #e9e1cf;border-radius:10px;padding:6px 8px;background:#fff;width:100%}
+.field input[type=range]{width:100%}
+.srow{background:#fff;border:2px solid #f1e6cc;border-radius:12px;padding:8px;margin-bottom:8px;display:flex;flex-direction:column;gap:6px}
+.sline{display:flex;gap:6px;align-items:center}
+.sline .grow{flex:1;min-width:0}
+.srow input.icon{width:58px;flex:none;text-align:center}
+.srow input[type=number]{width:76px;flex:none}
+.srow select{flex:1;min-width:0}
+.mini{border-radius:8px;padding:4px 9px;font-size:13px;color:#fff;flex:none}
+.mini.red{background:#e63946}
+.note{font-size:13px;color:#777;margin-bottom:8px;line-height:1.5}
+#sJson{width:100%;height:240px;font-family:monospace;font-size:12px;border:2px solid #e9e1cf;border-radius:10px;padding:6px;margin-bottom:8px}
+.setFoot{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;justify-content:flex-end}
+
+.startCard{text-align:center;width:min(94vw,520px);line-height:1.6}
+.startCard h1{color:#e85d04;font-size:26px}
+#wSchool{color:#3a86ff;font-size:18px}
+#wText{white-space:pre-line;margin:6px 0 10px}
+.startCard ul{list-style:none;text-align:left;font-size:14px;margin:8px 0 14px;background:#fff7e6;border-radius:12px;padding:8px 12px}
+.startCard li{margin:3px 0}
 </style>
+<script>
+window.addEventListener('error',function(e){var b=document.getElementById('errBox');if(!b)return;b.style.display='block';b.textContent='⚠️ เกิดข้อผิดพลาด: '+(e.message||'ไม่ทราบสาเหตุ')+(e.lineno?' (บรรทัด '+e.lineno+')':'');});
+</script>
 </head>
 <body>
-<div id="hud">
-  <div class="pill" id="coins">🪙 20</div>
-  <div class="pill" id="mission">ภารกิจ: สำรวจโรงเรียน 0/5</div>
-  <div class="pill" id="boost" style="display:none">⚡ สดชื่น! เดินเร็วขึ้น</div>
+<div id="loading">กำลังโหลดเกม... 🏫</div>
+<div id="errBox"></div>
+
+<div id="topbar">
+  <div class="row">
+    <div class="pill gold" id="coins">🪙 0</div>
+    <div class="pill pink" id="merit">🙏 0</div>
+    <div class="pill blue" id="books">📚 0/3</div>
+  </div>
+  <div class="row">
+    <button class="chip hl" id="btnMission">📋 ภารกิจ</button>
+    <button class="chip" id="btnGo">🧭 พาไป</button>
+    <button class="chip" id="btnVoice">🔊 เสียงพากย์: เปิด</button>
+    <button class="chip" id="btnFps">วัด fps</button>
+    <button class="chip" id="btnSettings">⚙️ ตั้งค่า</button>
+  </div>
+  <div id="nextMission"></div>
+  <div id="navBanner"><span id="navText"></span><button id="navCancel">ยกเลิก</button></div>
+  <div id="boost">⚡ สดชื่น! เดินเร็วขึ้น</div>
 </div>
-<canvas id="minimap"></canvas>
-<div id="prompt"></div>
+
+<canvas id="minimap" title="แตะเพื่อเปิดแผนที่"></canvas>
+<div id="mmHint">แตะแผนที่เพื่อขยาย</div>
+<div id="fps"></div>
+
+<div id="infoCard">
+  <button id="infoClose">×</button>
+  <div class="head"><span id="infoIcon"></span><h3 id="infoTitle"></h3></div>
+  <p id="infoText"></p>
+  <div id="infoBtns"></div>
+</div>
+
 <div id="toast"></div>
 <div id="joy"><div id="knob"></div></div>
-<button id="act">สำรวจ</button>
-<div id="dialog"><h2 id="dTitle"></h2><p id="dText"></p><div id="dBtns"></div></div>
-<div id="start"><div class="card">
-  <h1>🏫 เดินเล่นในโรงเรียน</h1>
-  <p>ภารกิจ: ไปสำรวจให้ครบ 5 ที่<br>เสาธง · หอพระ · ร้านน้ำ · โรงอาหาร · ห้องสมุด</p>
-  <p>🖥️ WASD/ลูกศร เดิน · ลากเมาส์หมุนกล้อง · E สำรวจ<br>📱 จอยซ้ายเดิน · ลากจอหมุนกล้อง · ปุ่มส้มสำรวจ</p>
-  <button id="startBtn">เริ่มเล่น</button>
+<div id="actions">
+  <button class="act yellow" id="btnWai">ไหว้</button>
+  <button class="act green" id="btnSit">นั่ง</button>
+  <button class="act blue" id="btnMap">แผนที่</button>
+</div>
+
+<!-- แผนที่ใหญ่ -->
+<div id="mapOverlay" class="overlay"><div class="panel mapPanel">
+  <div class="phead"><h2>🗺️ แผนที่โรงเรียน</h2><button class="close" data-close="mapOverlay">×</button></div>
+  <p class="hint">คลิกจุดใดก็ได้บนแผนที่ ตัวละครจะเดินไปเอง หรือกด "พาไป" ที่รายชื่อสถานที่</p>
+  <div class="mapBody"><canvas id="bigmap" width="720" height="720"></canvas><div id="placeList" class="scroll"></div></div>
 </div></div>
 
-<script type="module">
-import * as THREE from 'https://unpkg.com/three@0.160.0/build/three.module.js';
-try { await document.fonts.load('48px Itim'); } catch (e) {}
+<!-- ภารกิจ -->
+<div id="missionOverlay" class="overlay"><div class="panel">
+  <div class="phead"><h2>📋 ภารกิจ</h2><button class="close" data-close="missionOverlay">×</button></div>
+  <div id="missionList" class="scroll"></div>
+</div></div>
 
-// ================= ตั้งค่าพื้นฐาน =================
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-document.body.prepend(renderer.domElement);
+<!-- ตั้งค่า -->
+<div id="settingsOverlay" class="overlay"><div class="panel setPanel">
+  <div class="phead"><h2>⚙️ ตั้งค่าระบบ</h2><button class="close" data-close="settingsOverlay">×</button></div>
+  <div class="tabs">
+    <button data-tab="tGeneral" class="on">ทั่วไป</button>
+    <button data-tab="tPlaces">สถานที่</button>
+    <button data-tab="tMissions">ภารกิจ</button>
+    <button data-tab="tQuiz">คำถามครู</button>
+    <button data-tab="tAdvanced">ขั้นสูง (JSON)</button>
+  </div>
+  <div class="tabBody scroll" id="tabBody">
+    <div class="tab on" id="tGeneral">
+      <label class="field">ชื่อโรงเรียน<input type="text" id="sSchool"></label>
+      <label class="field">หัวข้อต้อนรับ<input type="text" id="sTitle"></label>
+      <label class="field">ข้อความต้อนรับ<textarea id="sText" rows="3"></textarea></label>
+      <label class="field">ชื่อตัวละครของผู้เล่น<input type="text" id="sPlayer"></label>
+      <div class="sline">
+        <label class="field grow">เหรียญเริ่มต้น<input type="number" id="sCoins" min="0"></label>
+        <label class="field grow">ความเร็วเดิน (2-15)<input type="number" id="sSpeed" min="2" max="15" step="0.5"></label>
+      </div>
+      <label class="field check"><input type="checkbox" id="sVoice"> เปิดเสียงพากย์ภาษาไทย</label>
+      <label class="field">ความเร็วเสียงพากย์: <span id="sRateVal"></span><input type="range" id="sRate" min="0.5" max="1.5" step="0.1"></label>
+      <label class="field">คุณภาพกราฟิก<select id="sQuality"><option value="high">สูง (มีเงา)</option><option value="low">ประหยัด (มือถือรุ่นเก่า)</option></select></label>
+    </div>
+    <div class="tab" id="tPlaces"></div>
+    <div class="tab" id="tMissions"></div>
+    <div class="tab" id="tQuiz"></div>
+    <div class="tab" id="tAdvanced">
+      <p class="note">การตั้งค่าที่บันทึกในเกมจะเก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น ถ้าต้องการให้ผู้เล่นทุกคนเห็นเหมือนกัน ให้กด "คัดลอก" แล้วนำไปวางแทนค่า DEFAULT_CONFIG ในไฟล์ index.html จากนั้น commit ขึ้น GitHub</p>
+      <textarea id="sJson" spellcheck="false"></textarea>
+      <div class="sline"><button class="btn blue" id="jsonCopy">📋 คัดลอก</button><button class="btn orange" id="jsonApply">📥 นำเข้า JSON นี้</button></div>
+    </div>
+  </div>
+  <div class="setFoot">
+    <button class="btn red" id="setReset">ล้างความคืบหน้า</button>
+    <button class="btn gray" id="setDefault">คืนค่าเริ่มต้น</button>
+    <button class="btn green" id="setSave">💾 บันทึก</button>
+  </div>
+</div></div>
 
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xbfe3ff);
-scene.fog = new THREE.Fog(0xbfe3ff, 60, 120);
-const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.1, 300);
+<!-- กล่องข้อความ -->
+<div id="dialog" class="overlay"><div class="panel dlg"><h2 id="dTitle" style="color:#e85d04"></h2><p id="dText"></p><div id="dBtns"></div></div></div>
 
-scene.add(new THREE.HemisphereLight(0xffffff, 0x7fae6a, 1.1));
-const sun = new THREE.DirectionalLight(0xffffff, 1.6);
-sun.position.set(25, 40, 15);
-sun.castShadow = true;
-sun.shadow.mapSize.set(2048, 2048);
-Object.assign(sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 120 });
-scene.add(sun);
+<!-- หน้าต้อนรับ -->
+<div id="start" class="overlay show"><div class="panel startCard scroll">
+  <h1 id="wTitle"></h1>
+  <p id="wSchool"></p>
+  <p id="wText"></p>
+  <ul>
+    <li>🖥️ <b>คอม:</b> WASD/ลูกศร เดิน · ลากเมาส์หมุนกล้อง · ล้อเมาส์ซูม · คลิกพื้นเพื่อเดินไป</li>
+    <li>⌨️ M แผนที่ · E ดูข้อมูล · F ไหว้ · C นั่ง · Esc ปิดหน้าต่าง</li>
+    <li>📱 <b>มือถือ:</b> จอยซ้ายเดิน · ลากจอหมุนกล้อง · ถ่างสองนิ้วซูม · แตะพื้นเพื่อเดินไป</li>
+    <li>🗺️ แตะแผนที่มุมขวา แล้วคลิกจุดที่ต้องการ หรือกด "พาไป"</li>
+    <li>🔊 เดินเข้าใกล้สถานที่ จะมีข้อมูลขึ้นพร้อมเสียงพากย์</li>
+  </ul>
+  <div><button class="btn big" id="startBtn">เริ่มเล่น ▶</button></div>
+</div></div>
 
-// ================= ฟังก์ชันช่วยสร้างฉาก =================
-const mats = {};
-const mat = c => mats[c] || (mats[c] = new THREE.MeshLambertMaterial({ color: c }));
-function addMesh(geo, color, x, y, z) {
-  const m = new THREE.Mesh(geo, mat(color));
-  m.position.set(x, y, z);
-  m.castShadow = true; m.receiveShadow = true;
-  scene.add(m); return m;
-}
-const box  = (w, h, d, c, x, y, z) => addMesh(new THREE.BoxGeometry(w, h, d), c, x, y + h / 2, z);
-const cyl  = (rt, rb, h, c, x, y, z, seg = 16) => addMesh(new THREE.CylinderGeometry(rt, rb, h, seg), c, x, y + h / 2, z);
-const ball = (r, c, x, y, z) => addMesh(new THREE.SphereGeometry(r, 16, 12), c, x, y, z);
-function roof(w, d, h, c, x, y, z) {           // หลังคาทรงปิรามิด
-  const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4);
-  const m = addMesh(g, c, x, y + h / 2, z); m.scale.set(w, h, d); return m;
-}
-const colliders = [], mapItems = [];
-function solid(x, z, w, d, mapColor) {         // กำแพงที่เดินทะลุไม่ได้
-  colliders.push({ minX: x - w / 2, maxX: x + w / 2, minZ: z - d / 2, maxZ: z + d / 2 });
-  if (mapColor) mapItems.push({ x, z, w, d, c: mapColor });
-}
-function path(x, z, w, d) {
-  box(w, 0.04, d, 0xe9dcc0, x, 0, z).castShadow = false;
-  mapItems.push({ x, z, w, d, c: '#e9dcc0' });
-}
-function label(text, x, y, z, bg = '#e85d04') { // ป้ายชื่อลอยด้วย Canvas 2D
-  const c = document.createElement('canvas'), g = c.getContext('2d');
-  g.font = '48px Itim, sans-serif';
-  const w = Math.ceil(g.measureText(text).width) + 50;
-  c.width = w; c.height = 80;
-  g.font = '48px Itim, sans-serif';
-  g.fillStyle = bg; g.beginPath();
-  g.roundRect ? g.roundRect(0, 0, w, 80, 24) : g.rect(0, 0, w, 80);
-  g.fill();
-  g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.fillText(text, w / 2, 44);
-  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex }));
-  s.scale.set(w / 80 * 1.3, 1.3, 1); s.position.set(x, y, z);
-  scene.add(s); return s;
-}
-function tree(x, z, i) {
-  cyl(0.25, 0.32, 1.6, 0x8d5524, x, 0, z, 8);
-  addMesh(new THREE.IcosahedronGeometry(1.5, 0), i % 2 ? 0x66bb6a : 0x43a047, x, 2.7, z);
-  solid(x, z, 0.8, 0.8);
-  mapItems.push({ x, z, w: 2.4, d: 2.4, c: '#43a047' });
-}
+<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+<script>window.THREE||document.write('<script src="https://unpkg.com/three@0.158.0/build/three.min.js"><\/script>')</script>
+<script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+if(!window.THREE){ $('loading').innerHTML='โหลดระบบ 3D ไม่สำเร็จ 😢<br><small>ตรวจสอบอินเทอร์เน็ตแล้วรีเฟรชหน้าเว็บ</small>'; return; }
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const now=()=>performance.now()/1000;
+const clone=o=>JSON.parse(JSON.stringify(o));
 
-// ================= ตัวละครแบบบล็อก =================
-function makePerson(shirt, pants, hair, skin = 0xf1c27d) {
-  const g = new THREE.Group();
-  const part = (w, h, d, c, x, y, z) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
-    m.position.set(x, y, z); m.castShadow = true; g.add(m); return m;
-  };
-  const limb = (w, h, d, c, x, y) => {          // แขนขาหมุนรอบข้อต่อด้านบน
-    const p = new THREE.Group(); p.position.set(x, y, 0);
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat(c));
-    m.position.y = -h / 2; m.castShadow = true; p.add(m); g.add(p); return p;
-  };
-  const legL = limb(0.32, 0.7, 0.32, pants, -0.18, 0.7);
-  const legR = limb(0.32, 0.7, 0.32, pants, 0.18, 0.7);
-  part(0.8, 0.8, 0.45, shirt, 0, 1.1, 0);
-  const armL = limb(0.22, 0.7, 0.22, shirt, -0.52, 1.45);
-  const armR = limb(0.22, 0.7, 0.22, shirt, 0.52, 1.45);
-  part(0.62, 0.6, 0.58, skin, 0, 1.82, 0);
-  part(0.66, 0.2, 0.62, hair, 0, 2.17, 0);
-  part(0.66, 0.4, 0.12, hair, 0, 1.97, -0.29);
-  part(0.08, 0.1, 0.02, 0x222222, -0.13, 1.85, 0.3);
-  part(0.08, 0.1, 0.02, 0x222222, 0.13, 1.85, 0.3);
-  g.userData = { legL, legR, armL, armR, poseUntil: 0 };
-  scene.add(g); return g;
-}
-
-// ================= พื้นและทางเดิน =================
-const ground = new THREE.Mesh(new THREE.PlaneGeometry(90, 90), mat(0x8fd16f));
-ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-path(0, 10, 4, 60);     // ทางหลัก ประตู → หอพระ
-path(0, 6, 44, 4);      // ทางขวาง ร้านน้ำ ↔ โรงอาหาร
-path(-18, -2, 4, 16);   // ทางไปห้องสมุด
-path(10, -12, 16, 3);   // ทางไปอาคารเรียน
-cyl(5, 5, 0.06, 0xf4e3c1, 0, 0, 0, 32).castShadow = false;
-mapItems.push({ x: 0, z: 0, w: 10, d: 10, c: '#f4e3c1' });
-
-// รั้วและประตูโรงเรียน
-box(80, 1.2, 0.5, 0xfff3e0, 0, 0, -40);
-box(0.5, 1.2, 80, 0xfff3e0, -40, 0, 0);
-box(0.5, 1.2, 80, 0xfff3e0, 40, 0, 0);
-box(37, 1.2, 0.5, 0xfff3e0, -21.5, 0, 40);
-box(37, 1.2, 0.5, 0xfff3e0, 21.5, 0, 40);
-box(1, 3.5, 1, 0xc0392b, -3, 0, 40); box(1, 3.5, 1, 0xc0392b, 3, 0, 40);
-box(7, 0.8, 1, 0xc0392b, 0, 3.5, 40);
-label('ประตูโรงเรียน', 0, 5.3, 40, '#c0392b');
-
-// ================= 1) เสาธง =================
-box(3, 0.4, 3, 0xffffff, 0, 0, 0);
-box(2, 0.4, 2, 0xe0e0e0, 0, 0.4, 0);
-cyl(0.08, 0.1, 9, 0xf5f5f5, 0, 0.8, 0, 8);
-ball(0.2, 0xffc300, 0, 9.9, 0);
-solid(0, 0, 3, 3, '#ffffff');
-const fc = document.createElement('canvas'); fc.width = 300; fc.height = 200;
-const fx = fc.getContext('2d');
-[['#A51931', 0, 1], ['#F4F5F8', 1, 1], ['#2D2A4A', 2, 2], ['#F4F5F8', 4, 1], ['#A51931', 5, 1]]
-  .forEach(([c, s, n]) => { fx.fillStyle = c; fx.fillRect(0, s * 200 / 6, 300, n * 200 / 6); });
-const flagTex = new THREE.CanvasTexture(fc); flagTex.colorSpace = THREE.SRGBColorSpace;
-const flagGeo = new THREE.PlaneGeometry(3, 2, 15, 6); flagGeo.translate(1.5, 0, 0);
-const flagBase = flagGeo.attributes.position.array.slice();
-const flag = new THREE.Mesh(flagGeo, new THREE.MeshLambertMaterial({ map: flagTex, side: THREE.DoubleSide }));
-flag.position.set(0.08, 8.6, 0); flag.castShadow = true; scene.add(flag);
-label('เสาธง', 0, 11.2, 0, '#1d3557');
-
-// ================= 2) หอพระ =================
-box(10, 0.6, 8, 0xf5f0e6, 0, 0, -24);
-box(8.6, 0.6, 6.6, 0xf5f0e6, 0, 0.6, -24);
-box(7, 3.2, 5, 0xffffff, 0, 1.2, -24.5);
-for (const x of [-3, -1.2, 1.2, 3]) cyl(0.2, 0.2, 3.2, 0xffffff, x, 1.2, -21.4);
-box(1.6, 2.2, 0.1, 0xd4a017, 0, 1.2, -21.95);
-box(7.4, 0.25, 5.4, 0xffc300, 0, 4.3, -24.5);
-roof(9.4, 7, 1.6, 0xc0392b, 0, 4.4, -24.3);
-roof(6.4, 4.6, 2.6, 0xe67e22, 0, 5.2, -24.3);
-cyl(0, 0.3, 2.5, 0xffc300, 0, 7.4, -24.3, 8);
-box(1.4, 0.5, 1, 0xffffff, 0, 1.2, -21.2);       // พระพุทธรูปหน้าหอพระ
-box(1, 0.3, 0.6, 0xffc300, 0, 1.7, -21.2);
-ball(0.42, 0xffc300, 0, 2.3, -21.2);
-ball(0.25, 0xffc300, 0, 2.95, -21.2);
-cyl(0, 0.1, 0.3, 0xffc300, 0, 3.15, -21.2, 8);
-solid(0, -24, 10, 8, '#f4a261');
-label('หอพระ', 0, 11, -24.3, '#d4a017');
-
-// ================= 3) ร้านน้ำ =================
-box(6, 2.8, 0.3, 0xf1faee, -16, 0, 0.7);
-box(6, 1.1, 0.6, 0x2a9d8f, -16, 0, 3.2);
-for (const [px, pz] of [[-18.9, 0.7], [-13.1, 0.7], [-18.9, 3.3], [-13.1, 3.3]]) box(0.2, 2.8, 0.2, 0xffffff, px, 0, pz);
-for (let i = 0; i < 6; i++) box(1, 0.15, 3.6, i % 2 ? 0xffffff : 0xe63946, -18.5 + i, 2.8, 2);
-[[0xe63946, -17.5], [0xf4a261, -16.5], [0x8bc34a, -15.5], [0xe63946, -14.5]]
-  .forEach(([c, x]) => cyl(0.18, 0.14, 0.45, c, x, 1.1, 3.2, 10));
-solid(-16, 2, 6.2, 3.4, '#e63946');
-label('ร้านน้ำ', -16, 4.4, 2, '#e63946');
-
-// ================= 4) โรงอาหาร (เดินเข้าไปข้างในได้) =================
-box(12, 0.06, 10, 0xd9d9d9, 18, 0, 0).castShadow = false;
-mapItems.push({ x: 18, z: 0, w: 12, d: 10, c: '#f4a261' });
-for (const px of [12.5, 18, 23.5]) for (const pz of [-4.5, 4.5]) {
-  cyl(0.25, 0.25, 4, 0xffffff, px, 0, pz, 10); solid(px, pz, 0.6, 0.6);
-}
-box(13, 0.3, 11, 0xf4a261, 18, 4, 0);
-roof(13, 11, 1.5, 0xe76f51, 18, 4.3, 0);
-box(10, 1, 0.9, 0xffffff, 18, 0, -3.3); solid(18, -3.3, 10, 0.9);
-for (const x of [14, 18, 20, 22]) cyl(0.35, 0.3, 0.4, 0xb0bec5, x, 1, -3.3, 12);
-for (const tx of [15, 21]) for (const tz of [-0.5, 2.8]) {
-  box(3, 0.8, 1.2, 0xc68642, tx, 0, tz);
-  box(3, 0.45, 0.4, 0x8d5524, tx, 0, tz - 0.9);
-  box(3, 0.45, 0.4, 0x8d5524, tx, 0, tz + 0.9);
-  solid(tx, tz, 3, 2.2);
-}
-label('โรงอาหาร', 18, 7.2, 0, '#e76f51');
-
-// ================= 5) ห้องสมุด =================
-box(12, 5, 8, 0xf6e7c1, -18, 0, -14);
-roof(13, 9, 2.2, 0x3a6ea5, -18, 5, -14);
-for (const x of [-22.5, -20.5, -15.5, -13.5]) box(1.4, 1.4, 0.1, 0x9ad1ff, x, 2, -9.95);
-box(1.8, 2.6, 0.1, 0x8d5524, -18, 0, -9.95);
-box(4, 0.3, 1.2, 0xdddddd, -18, 0, -9.4).castShadow = false;
-solid(-18, -14, 12, 8, '#3a6ea5');
-label('ห้องสมุด', -18, 8.6, -14, '#3a6ea5');
-
-// ================= อาคารเรียน (ฉากประกอบ) =================
-box(14, 9, 7, 0xf1e3d3, 18, 0, -17);
-box(14.1, 0.25, 7.1, 0xc0392b, 18, 3, -17);
-box(14.1, 0.25, 7.1, 0xc0392b, 18, 6, -17);
-for (let f = 0; f < 3; f++) for (const x of [12.5, 15, 18, 21, 23.5]) {
-  if (f === 0 && x === 18) continue;
-  box(1.4, 1.2, 0.1, 0x9ad1ff, x, 0.9 + 3 * f, -13.45);
-}
-box(2, 2.4, 0.1, 0x8d5524, 18, 0, -13.45);
-roof(15, 8, 2, 0xc0392b, 18, 9, -17);
-solid(18, -17, 14, 7, '#d6c2a8');
-label('อาคารเรียน', 18, 12.3, -17, '#6c757d');
-
-// ต้นไม้
-[[-30,-30],[-30,-20],[-32,-5],[-30,10],[-30,25],[-20,28],[-8,26],[8,26],[22,28],[32,22],
- [32,10],[33,-5],[32,-28],[-8,-32],[8,-32],[22,-32],[-6,12],[6,12],[-8,-10],[8,-6]]
- .forEach(([x, z], i) => tree(x, z, i));
-
-// ================= ตัวละคร =================
-const player = makePerson(0xffffff, 0x1d3557, 0x222222);
-player.position.set(0, 0, 14); player.rotation.y = Math.PI;
-const npcs = [];
-function npc(x, z, ry, shirt, pants, hair) {
-  const n = makePerson(shirt, pants, hair);
-  n.position.set(x, 0, z); n.rotation.y = ry; n.userData.baseRy = ry;
-  solid(x, z, 0.8, 0.8); npcs.push(n);
-}
-npc(-16, 1.6, 0, 0xe63946, 0x6d4c41, 0x333333);    // แม่ค้าร้านน้ำ
-npc(16, -4.1, 0, 0xf4a261, 0x264653, 0x222222);    // ป้าแม่ครัว
-npc(3.5, 3, -0.8, 0xffffff, 0x1d3557, 0x3e2723);   // นักเรียน
-npc(-3.5, 3, 0.8, 0xffffff, 0x1d3557, 0x111111);
-npc(-14, -8, 0, 0xffffff, 0x1d3557, 0x5d4037);     // นักเรียนหน้าห้องสมุด
-
-// ================= เสียงที่สร้างด้วยโค้ด =================
-let actx;
-function audio() {
-  if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-  if (actx.state === 'suspended') actx.resume();
-  return actx;
-}
-function tone(freq, dur, type = 'sine', vol = 0.2, delay = 0) {
-  const a = audio(), t = a.currentTime + delay;
-  const o = a.createOscillator(), g = a.createGain();
-  o.type = type; o.frequency.value = freq;
-  g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur);
-}
-const sfx = {
-  coin() { tone(988, 0.1, 'square', 0.07); tone(1319, 0.25, 'square', 0.07, 0.08); },
-  bell() { [520, 1300, 2100].forEach((f, i) => tone(f, 2.5, 'sine', 0.25 / (i + 1))); },
-  pop() { tone(660, 0.12, 'triangle', 0.15); },
-  fanfare() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.35, 'triangle', 0.15, i * 0.15)); },
+/* =====================================================================
+   1) ค่าเริ่มต้นของเกม — แก้ไขส่วนนี้แล้ว commit เพื่อให้ทุกคนเห็นเหมือนกัน
+   ===================================================================== */
+const DEFAULT_CONFIG={
+  schoolName:'โรงเรียนบ้านสุขใจ',
+  welcomeTitle:'ยินดีต้อนรับสู่โรงเรียนบ้านสุขใจ',
+  welcomeText:'มาเดินสำรวจโรงเรียนของเรากัน ทำภารกิจให้ครบ สะสมเหรียญ และทำความรู้จักสถานที่ต่าง ๆ ในโรงเรียน',
+  playerName:'นักเรียนใหม่',
+  startCoins:20,
+  walkSpeed:6,
+  voice:true,
+  voiceRate:1,
+  quality:'high',
+  places:[
+    {id:'gate',name:'ประตูโรงเรียน',icon:'🚪',info:'ยินดีต้อนรับสู่โรงเรียนของเรา โรงเรียนเปิดเวลา 07:00 น. นักเรียนควรมาถึงก่อนเข้าแถวเวลา 08:00 น. และแต่งกายให้เรียบร้อยทุกวัน'},
+    {id:'flag',name:'เสาธง',icon:'🇹🇭',info:'ลานเสาธงเป็นที่เข้าแถวเคารพธงชาติทุกเช้าเวลา 08:00 น. ธงไตรรงค์มี 3 สี สีแดงหมายถึงชาติ สีขาวหมายถึงศาสนา และสีน้ำเงินหมายถึงพระมหากษัตริย์'},
+    {id:'shrine',name:'หอพระ',icon:'🙏',info:'หอพระประจำโรงเรียน ประดิษฐานพระพุทธรูปให้นักเรียนและครูได้กราบไหว้ นักเรียนมักแวะมาไหว้พระก่อนเข้าเรียนหรือก่อนสอบเพื่อเป็นสิริมงคล'},
+    {id:'drink',name:'ร้านน้ำ',icon:'🧋',info:'ร้านน้ำป้าแดง มีน้ำแดงโซดา ชาเย็น และน้ำเปล่า ดื่มแล้วสดชื่น เดินเร็วขึ้นชั่วคราว อย่าลืมทิ้งแก้วลงถังขยะนะ'},
+    {id:'canteen',name:'โรงอาหาร',icon:'🍛',info:'โรงอาหารกลาง มีข้าวมันไก่ ก๋วยเตี๋ยว และผัดกะเพรา เปิดช่วงพักกลางวันเวลา 11:30 ถึง 12:30 น. กินเสร็จแล้วช่วยกันเก็บจานให้เรียบร้อย'},
+    {id:'library',name:'ห้องสมุด',icon:'📚',info:'ห้องสมุดเปิดเวลา 07:30 ถึง 16:30 น. ยืมหนังสือได้ครั้งละไม่เกิน 3 เล่ม นาน 7 วัน ภายในห้องสมุดโปรดใช้เสียงเบา ๆ'},
+    {id:'classroom',name:'อาคารเรียน',icon:'✏️',info:'อาคารเรียนหลังที่ 1 มีห้องเรียนพร้อมกระดานและโต๊ะเรียน คุณครูรอให้นักเรียนมาตอบคำถาม ตอบถูกได้รับเหรียญรางวัล'},
+    {id:'field',name:'สนามฟุตบอล',icon:'⚽',info:'สนามฟุตบอลของโรงเรียน ใช้เรียนวิชาพลศึกษาและแข่งกีฬาสี ลองเดินไปชนลูกบอลหรือกดปุ่มเตะบอลให้เข้าประตูดูสิ'}
+  ],
+  missions:[
+    {id:'m1',title:'เดินเข้าประตูโรงเรียน',type:'visit',target:'gate',reward:5,enabled:true},
+    {id:'m2',title:'ไปที่ลานเสาธง',type:'visit',target:'flag',reward:5,enabled:true},
+    {id:'m3',title:'ยืนตรงเคารพธงชาติ',type:'action',target:'flag',reward:10,enabled:true},
+    {id:'m4',title:'ไหว้พระที่หอพระ',type:'action',target:'wai',reward:15,enabled:true},
+    {id:'m5',title:'ซื้อน้ำที่ร้านน้ำ',type:'action',target:'drink',reward:10,enabled:true},
+    {id:'m6',title:'กินข้าวที่โรงอาหาร',type:'action',target:'eat',reward:15,enabled:true},
+    {id:'m7',title:'ยืมหนังสือที่ห้องสมุด',type:'action',target:'borrow',reward:10,enabled:true},
+    {id:'m8',title:'นั่งอ่านหนังสือในห้องสมุด',type:'action',target:'read',reward:10,enabled:true},
+    {id:'m9',title:'ตอบคำถามครูให้ถูก',type:'action',target:'quiz',reward:20,enabled:true},
+    {id:'m10',title:'ยิงประตูที่สนามฟุตบอล',type:'action',target:'goal',reward:20,enabled:true}
+  ],
+  quiz:[
+    {q:'ธงชาติไทยมีกี่สี',choices:['2 สี','3 สี','4 สี'],answer:1},
+    {q:'ประเทศไทยมีกี่จังหวัด (นับรวมกรุงเทพมหานคร)',choices:['76','77','78'],answer:1},
+    {q:'1 ปีมีกี่เดือน',choices:['10 เดือน','12 เดือน','13 เดือน'],answer:1},
+    {q:'ข้อใดเป็นสัตว์เลี้ยงลูกด้วยนม',choices:['ปลาวาฬ','ปลาฉลาม','จระเข้'],answer:0},
+    {q:'5 × 6 เท่ากับเท่าไร',choices:['30','35','36'],answer:0}
+  ]
 };
 
-// ================= ข้อมูลสถานที่และภารกิจ =================
-const now = () => performance.now() / 1000;
-let coins = 20, books = 0, boostUntil = 0, pendingFinish = false, finished = false;
-const bookTitles = ['แฮร์รี่ พอตเตอร์', 'เจ้าชายน้อย', 'สามก๊ก', 'วิทยาศาสตร์น่ารู้', 'ขุนช้างขุนแผน'];
-const places = [
-  { name: 'เสาธง', x: 0, z: 0, r: 4.5, mark: [0, 2.5],
-    text: 'ทุกเช้าเวลา 08:00 น. นักเรียนเข้าแถวเคารพธงชาติที่ลานนี้\nธงไตรรงค์มี 3 สี: แดง = ชาติ, ขาว = ศาสนา, น้ำเงิน = พระมหากษัตริย์',
-    actions: [{ label: 'ยืนตรงเคารพธง', fn: () => { sfx.pop(); toast('ยืนตรง! 🇹🇭'); } }] },
-  { name: 'หอพระ', x: 0, z: -18.5, r: 3.5,
-    text: 'หอพระประจำโรงเรียน ประดิษฐานพระพุทธรูปสีทอง\nนักเรียนมักแวะไหว้พระก่อนเข้าห้องเรียน',
-    actions: [{ label: 'ไหว้พระ 🙏', fn: () => { player.userData.poseUntil = now() + 2.5; sfx.bell(); toast('สาธุ 🙏'); } }] },
-  { name: 'ร้านน้ำ', x: -16, z: 5.4, r: 3.2,
-    text: 'ร้านป้าแดง มีน้ำแดงโซดา ชาเย็น และชาเขียว\nดื่มแล้วสดชื่น เดินเร็วขึ้น 10 วินาที!',
-    actions: [{ label: 'ซื้อน้ำแดง (5 เหรียญ)', fn: () => {
-      if (coins < 5) return toast('เหรียญไม่พอ 😢');
-      coins -= 5; boostUntil = now() + 10; sfx.coin(); toast('สดชื่น! เดินเร็วขึ้น ⚡');
-    } }] },
-  { name: 'โรงอาหาร', x: 18, z: 0.5, r: 6,
-    text: 'เมนูวันนี้: ข้าวมันไก่ ก๋วยเตี๋ยว ผัดกะเพราไข่ดาว\nกินเสร็จอย่าลืมเก็บจานไปวางที่ชั้นนะ',
-    actions: [{ label: 'ซื้อข้าว (10 เหรียญ)', fn: () => {
-      if (coins < 10) return toast('เหรียญไม่พอ 😢');
-      coins -= 10; sfx.coin(); toast('อร่อยมาก! อิ่มแล้ว 😋');
-    } }] },
-  { name: 'ห้องสมุด', x: -18, z: -7.8, r: 3.5,
-    text: 'ห้องสมุดเปิด 07:30–16:30 น.\nยืมหนังสือได้ครั้งละ 3 เล่ม และอย่าส่งเสียงดังนะ 🤫',
-    actions: [{ label: 'ยืมหนังสือ 📚', fn: () => {
-      if (books >= 3) return toast('ยืมครบ 3 เล่มแล้ว');
-      books++; sfx.pop();
-      toast(`ยืม "${bookTitles[Math.floor(Math.random() * bookTitles.length)]}" (${books}/3)`);
-    } }] },
-];
-// เหรียญหมุนบอกจุดที่ยังไม่ได้สำรวจ
-const coinGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.12, 24); coinGeo.rotateX(Math.PI / 2);
-const coinMat = new THREE.MeshLambertMaterial({ color: 0xffc300, emissive: 0x664400 });
-for (const p of places) {
-  const [mx, mz] = p.mark || [p.x, p.z];
-  p.marker = new THREE.Mesh(coinGeo, coinMat);
-  p.marker.position.set(mx, 2.6, mz); scene.add(p.marker);
-}
+/* กิจกรรมที่ใช้เป็นเป้าหมายภารกิจได้ */
+const ACTIONS={
+  flag:{name:'เคารพธงชาติ (เสาธง)',place:'flag'},
+  wai:{name:'ไหว้พระ (หอพระ)',place:'shrine'},
+  bell:{name:'ตีระฆัง (หอพระ)',place:'shrine'},
+  drink:{name:'ซื้อน้ำ (ร้านน้ำ)',place:'drink'},
+  eat:{name:'ซื้อข้าว (โรงอาหาร)',place:'canteen'},
+  borrow:{name:'ยืมหนังสือ (ห้องสมุด)',place:'library'},
+  read:{name:'นั่งอ่านหนังสือ (ห้องสมุด)',place:'library'},
+  quiz:{name:'ตอบคำถามครูถูก (อาคารเรียน)',place:'classroom'},
+  goal:{name:'ยิงประตูฟุตบอล (สนาม)',place:'field'}
+};
 
-// ================= หน้าจอ HUD / กล่องข้อความ =================
-const $ = id => document.getElementById(id);
-const coinsEl = $('coins'), missionEl = $('mission'), boostEl = $('boost'), promptEl = $('prompt');
-const dialog = $('dialog'), actBtn = $('act');
-let dialogOpen = false, dialogPlace = null, near = null, toastTimer;
+/* ตำแหน่งสถานที่ในฉาก 3D (spot = จุดที่ตรวจว่าเข้าใกล้ / จุดหมายของการพาไป) */
+const LAYOUT={
+  gate:{spot:[0,37],r:4.5,label:[0,6.4,42],color:'#c0392b'},
+  flag:{spot:[0,8.5],r:4.2,label:[0,11.4,4],color:'#1d3557'},
+  shrine:{spot:[0,-27],r:3.2,label:[0,11.2,-28],color:'#b8860b'},
+  drink:{spot:[-14,10.4],r:2.8,label:[-14,4.8,14],color:'#e63946'},
+  canteen:{spot:[16,15],r:5.2,label:[16,7.6,15],color:'#e76f51'},
+  library:{spot:[-18,-11],r:3.6,label:[-18,8.4,-12],color:'#3a6ea5'},
+  classroom:{spot:[18,-11],r:3.6,label:[18,8.6,-12],color:'#7f5539'},
+  field:{spot:[-26,28],r:7.5,label:[-26,4.2,28],color:'#2d6a4f'}
+};
 
-function updateHud() {
-  coinsEl.textContent = `🪙 ${coins}`;
-  const n = places.filter(p => p.visited).length;
-  missionEl.textContent = finished ? 'ภารกิจสำเร็จ ✅' : `ภารกิจ: สำรวจโรงเรียน ${n}/5`;
-}
-function toast(msg) {
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
-}
-function showDialog(title, text, actions = [], place = null) {
-  $('dTitle').textContent = title; $('dText').textContent = text;
-  const btns = $('dBtns'); btns.innerHTML = '';
-  const add = (lbl, fn, color) => {
-    const b = document.createElement('button'); b.textContent = lbl; b.style.background = color;
-    b.onclick = fn; btns.appendChild(b);
-  };
-  for (const a of actions) add(a.label, () => { a.fn(); updateHud(); closeDialog(); }, '#2a9d8f');
-  add('ปิด', closeDialog, '#999');
-  dialog.style.display = 'block'; dialogOpen = true; dialogPlace = place;
-}
-function closeDialog() {
-  dialog.style.display = 'none'; dialogOpen = false; dialogPlace = null;
-  if (pendingFinish) {
-    pendingFinish = false; finished = true; updateHud(); sfx.fanfare();
-    setTimeout(() => showDialog('🎉 ภารกิจสำเร็จ!',
-      `คุณสำรวจครบทั้ง 5 ที่แล้ว\nตอนนี้มี ${coins} เหรียญ\nเดินเล่นต่อ หรือใช้เหรียญซื้อน้ำ ซื้อข้าวได้เลย`), 300);
+/* ===================== 2) บันทึก / โหลด ===================== */
+const LS_CFG='schoolGame.config.v2', LS_SAVE='schoolGame.save.v2';
+function lsGet(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+
+function sanitizeConfig(c){
+  const out=clone(DEFAULT_CONFIG);
+  if(!c||typeof c!=='object') return out;
+  for(const k of ['schoolName','welcomeTitle','welcomeText','playerName']) if(c[k]!=null) out[k]=String(c[k]);
+  if(c.startCoins!=null) out.startCoins=Math.max(0,Number(c.startCoins)||0);
+  if(c.walkSpeed!=null) out.walkSpeed=clamp(Number(c.walkSpeed)||6,2,15);
+  if(c.voiceRate!=null) out.voiceRate=clamp(Number(c.voiceRate)||1,0.5,2);
+  if(c.voice!=null) out.voice=!!c.voice;
+  out.quality=c.quality==='low'?'low':'high';
+  const src=Array.isArray(c.places)?c.places:[];
+  out.places=DEFAULT_CONFIG.places.map(def=>{
+    const s=src.find(p=>p&&p.id===def.id)||{};
+    return {id:def.id,name:String(s.name!=null?s.name:def.name),icon:String(s.icon!=null?s.icon:def.icon),info:String(s.info!=null?s.info:def.info)};
+  });
+  if(Array.isArray(c.missions)){
+    out.missions=c.missions.filter(m=>m&&(m.type==='visit'||m.type==='action')).map((m,i)=>({
+      id:String(m.id||('m'+Date.now()+'_'+i)),title:String(m.title||'ภารกิจ'),type:m.type,
+      target:String(m.target||''),reward:Math.max(0,Number(m.reward)||0),enabled:m.enabled!==false}));
   }
+  if(Array.isArray(c.quiz)){
+    const qs=c.quiz.filter(q=>q&&q.q&&Array.isArray(q.choices)&&q.choices.length>=2).map(q=>({
+      q:String(q.q),choices:q.choices.map(String),answer:clamp(Math.floor(Number(q.answer)||0),0,q.choices.length-1)}));
+    if(qs.length) out.quiz=qs;
+  }
+  return out;
 }
-function interact() {
-  if (!near || dialogOpen) return;
-  const p = near;
-  if (!p.visited) {
-    p.visited = true; p.marker.visible = false; coins += 10; sfx.coin();
-    toast(`ค้นพบ ${p.name}! +10 เหรียญ`);
-    if (places.every(q => q.visited)) pendingFinish = true;
-    updateHud();
-  } else sfx.pop();
-  showDialog(p.name, p.text, p.actions, p);
+let config=sanitizeConfig(lsGet(LS_CFG)||DEFAULT_CONFIG);
+const hadSave=!!lsGet(LS_SAVE);
+function freshProgress(){ return {coins:config.startCoins,merit:0,books:0,visited:{},done:{},celebrated:false}; }
+function loadProgress(){ const p=freshProgress(), s=lsGet(LS_SAVE); if(s&&typeof s==='object'){ Object.assign(p,s); p.visited=p.visited||{}; p.done=p.done||{}; } return p; }
+let prog=loadProgress();
+function saveProg(){ lsSet(LS_SAVE,prog); }
+const placeById=id=>config.places.find(p=>p.id===id);
+
+/* ===================== 3) ตั้งค่า 3D ===================== */
+const HQ=config.quality==='high';
+const renderer=new THREE.WebGLRenderer({antialias:HQ});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,HQ?2:1));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled=HQ;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.domElement.id='game';
+document.body.prepend(renderer.domElement);
+
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xaee0ff);
+scene.fog=new THREE.Fog(0xaee0ff,70,140);
+const camera=new THREE.PerspectiveCamera(55,innerWidth/innerHeight,0.1,400);
+scene.add(new THREE.HemisphereLight(0xffffff,0x6a8f5a,1.5));
+const sun=new THREE.DirectionalLight(0xfff4e0,2.0);
+sun.position.set(30,50,20);
+sun.castShadow=HQ;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-50,right:50,top:50,bottom:-50,near:1,far:150});
+sun.shadow.bias=-0.0005;
+scene.add(sun);
+
+/* ===================== 4) เครื่องมือสร้างฉาก ===================== */
+const matCache={};
+const mat=c=>matCache[c]||(matCache[c]=new THREE.MeshLambertMaterial({color:c}));
+const GOLD=new THREE.MeshLambertMaterial({color:0xe8b923,emissive:0x5a4000});
+const LAMP=new THREE.MeshLambertMaterial({color:0xfff3b0,emissive:0x8a7a2a});
+const FLAME=new THREE.MeshLambertMaterial({color:0xffb703,emissive:0xff7b00});
+const NET=new THREE.MeshLambertMaterial({color:0xffffff,transparent:true,opacity:0.45});
+const COIN=new THREE.MeshLambertMaterial({color:0xffc300,emissive:0x6b4f00});
+
+const colliders=[], mapItems=[], buildings=[], treeList=[], placeLabels={}, boards=[];
+
+function mk(geo,m,x,y,z,parent){
+  const mesh=new THREE.Mesh(geo,typeof m==='number'?mat(m):m);
+  mesh.position.set(x,y,z); mesh.castShadow=true; mesh.receiveShadow=true;
+  (parent||scene).add(mesh); return mesh;
 }
-actBtn.addEventListener('click', interact);
-$('startBtn').addEventListener('click', () => { $('start').style.display = 'none'; audio(); sfx.pop(); });
-
-// ================= การควบคุม =================
-const keys = {};
-addEventListener('keydown', e => {
-  keys[e.code] = true;
-  if (e.code === 'KeyE') dialogOpen ? closeDialog() : interact();
-  if (e.code === 'Escape' && dialogOpen) closeDialog();
-});
-addEventListener('keyup', e => keys[e.code] = false);
-
-// จอยเดิน (Pointer Events)
-const joy = $('joy'), knob = $('knob'), R = 45;
-let joyId = null, jx = 0, jy = 0;
-function moveJoy(e) {
-  const r = joy.getBoundingClientRect();
-  let dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-  const d = Math.hypot(dx, dy);
-  if (d > R) { dx *= R / d; dy *= R / d; }
-  jx = dx / R; jy = dy / R;
-  knob.style.transform = `translate(${dx}px,${dy}px)`;
+function box(w,h,d,m,x,y,z,parent){ return mk(new THREE.BoxGeometry(w,h,d),m,x,y+h/2,z,parent); }
+function cyl(rt,rb,h,m,x,y,z,seg,parent){ return mk(new THREE.CylinderGeometry(rt,rb,h,seg||16),m,x,y+h/2,z,parent); }
+function sph(r,m,x,y,z,parent){ return mk(new THREE.SphereGeometry(r,16,12),m,x,y,z,parent); }
+function slab(w,d,m,x,z,y,h){ const b=box(w,h||0.05,d,m,x,y||0,z); b.castShadow=false; return b; }
+function pyramid(w,d,h,m,x,y,z,parent){
+  const g=new THREE.ConeGeometry(Math.SQRT1_2,1,4); g.rotateY(Math.PI/4);
+  const ms=mk(g,m,x,y+h/2,z,parent); ms.scale.set(w,h,d); return ms;
 }
-joy.addEventListener('pointerdown', e => { joyId = e.pointerId; joy.setPointerCapture(e.pointerId); moveJoy(e); });
-joy.addEventListener('pointermove', e => { if (e.pointerId === joyId) moveJoy(e); });
-const endJoy = e => { if (e.pointerId === joyId) { joyId = null; jx = jy = 0; knob.style.transform = ''; } };
-joy.addEventListener('pointerup', endJoy);
-joy.addEventListener('pointercancel', endJoy);
-
-// ลากจอเพื่อหมุนกล้อง
-const cvs = renderer.domElement;
-let camYaw = 0, camH = 7, camDist = 11, dragId = null, lastX = 0, lastY = 0;
-cvs.addEventListener('pointerdown', e => { dragId = e.pointerId; lastX = e.clientX; lastY = e.clientY; cvs.setPointerCapture(e.pointerId); });
-cvs.addEventListener('pointermove', e => {
-  if (e.pointerId !== dragId) return;
-  camYaw -= (e.clientX - lastX) * 0.006;
-  camH = Math.min(14, Math.max(3, camH + (e.clientY - lastY) * 0.03));
-  lastX = e.clientX; lastY = e.clientY;
-});
-const endDrag = e => { if (e.pointerId === dragId) dragId = null; };
-cvs.addEventListener('pointerup', endDrag);
-cvs.addEventListener('pointercancel', endDrag);
-addEventListener('wheel', e => { camDist = Math.min(20, Math.max(6, camDist + e.deltaY * 0.01)); }, { passive: true });
-
-// ชนกำแพง
-function blocked(x, z) {
-  const r = 0.45;
-  for (const c of colliders)
-    if (x + r > c.minX && x - r < c.maxX && z + r > c.minZ && z - r < c.maxZ) return true;
+function gable(span,len,h,m,x,y,z,alongX,parent){ // หลังคาจั่ว (สันหลังคาตามแกน z หรือ x)
+  const s=new THREE.Shape(); s.moveTo(-span/2,0); s.lineTo(span/2,0); s.lineTo(0,h); s.closePath();
+  const g=new THREE.ExtrudeGeometry(s,{depth:len,bevelEnabled:false}); g.translate(0,0,-len/2);
+  if(alongX) g.rotateY(Math.PI/2);
+  return mk(g,m,x,y,z,parent);
+}
+function solid(x,z,w,d){ colliders.push({x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2}); }
+function blocked(x,z,r){
+  for(const c of colliders) if(x+r>c.x0&&x-r<c.x1&&z+r>c.z0&&z-r<c.z1) return true;
   return false;
 }
-function tryMove(dx, dz) {
-  const p = player.position;
-  const nx = Math.min(39, Math.max(-39, p.x + dx)), nz = Math.min(39, Math.max(-39, p.z + dz));
-  if (!blocked(nx, nz)) { p.x = nx; p.z = nz; }
+function addPath(x,z,w,d){ slab(w,d,0xe9dcc0,x,z,0,0.04); mapItems.push({x,z,w,d,c:'#e9dcc0'}); }
+
+/* ป้ายชื่อลอย (วาดด้วย Canvas 2D) */
+function roundRect(g,x,y,w,h,r){ g.beginPath(); g.moveTo(x+r,y); g.arcTo(x+w,y,x+w,y+h,r); g.arcTo(x+w,y+h,x,y+h,r); g.arcTo(x,y+h,x,y,r); g.arcTo(x,y,x+w,y,r); g.closePath(); }
+function setLabel(s,text,bg){
+  const c=document.createElement('canvas'), g=c.getContext('2d'), font='44px Itim, sans-serif';
+  g.font=font; const w=Math.ceil(g.measureText(text).width)+48;
+  c.width=w; c.height=72; g.font=font;
+  g.fillStyle=bg; roundRect(g,0,0,w,72,22); g.fill();
+  g.fillStyle='#fff'; g.textAlign='center'; g.textBaseline='middle'; g.fillText(text,w/2,38);
+  const tex=new THREE.CanvasTexture(c); tex.colorSpace=THREE.SRGBColorSpace;
+  if(s.material.map) s.material.map.dispose();
+  s.material.map=tex; s.material.needsUpdate=true;
+  s.scale.set(c.width/c.height*s.userData.h,s.userData.h,1);
 }
-function lerpAngle(a, b, k) {
-  const d = ((b - a + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI;
-  return a + d * k;
+function makeLabel(text,bg,x,y,z,h,parent){
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({depthWrite:false}));
+  s.userData.h=h||1.4; s.position.set(x,y,z); setLabel(s,text,bg);
+  (parent||scene).add(s); return s;
+}
+/* ป้าย/กระดานที่มีตัวหนังสือ */
+function makeBoard(w,h,pw,ph,draw){
+  const c=document.createElement('canvas'); c.width=pw; c.height=ph;
+  const tex=new THREE.CanvasTexture(c); tex.colorSpace=THREE.SRGBColorSpace;
+  const bd={c,tex,draw}; boards.push(bd); draw(c.getContext('2d'),pw,ph); tex.needsUpdate=true;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({map:tex}));
+  scene.add(m); return m;
+}
+function drawBoards(){ for(const b of boards){ b.draw(b.c.getContext('2d'),b.c.width,b.c.height); b.tex.needsUpdate=true; } }
+
+/* อาคารที่เดินเข้าไปได้ (มีประตูด้านทิศใต้) */
+function makeHouse(o){
+  const x=o.x,z=o.z,w=o.w,d=o.d,h=o.h||4,door=o.door||2.4,doorH=o.doorH||2.9,t=0.3;
+  const b={x,z,w,d,fade:[],roof:new THREE.Group(),inside:0,walls:true};
+  scene.add(b.roof); buildings.push(b);
+  const wm=new THREE.MeshLambertMaterial({color:o.wall||0xffffff,transparent:true,opacity:1}); b.fade.push(wm);
+  const W=(bw,bh,bd,bx,by,bz,isSolid)=>{ box(bw,bh,bd,wm,bx,by,bz); if(isSolid) solid(bx,bz,bw,bd); };
+  W(w,h,t,x,0,z-d/2,true);
+  W(t,h,d,x-w/2,0,z,true);
+  W(t,h,d,x+w/2,0,z,true);
+  const seg=(w-door)/2;
+  W(seg,h,t,x-w/2+seg/2,0,z+d/2,true);
+  W(seg,h,t,x+w/2-seg/2,0,z+d/2,true);
+  W(door,h-doorH,t,x,doorH,z+d/2,false);
+  slab(w-0.1,d-0.1,o.floor||0xe8dcc4,x,z,0,0.06);
+  mapItems.push({x,z,w,d,c:o.mapColor||'#bbb'});
+  b.deco=m=>{ m.material=m.material.clone(); m.material.transparent=true; b.fade.push(m.material); return m; };
+  return b;
 }
 
-// ================= แผนที่ย่อ =================
-const mm = $('minimap'), mctx = mm.getContext('2d');
-mm.width = mm.height = 260;
-const S = 260 / 80, toMx = x => (x + 40) * S, toMz = z => (z + 40) * S;
-const mapBg = document.createElement('canvas'); mapBg.width = mapBg.height = 260;
-const mb = mapBg.getContext('2d');
-mb.fillStyle = '#8fd16f'; mb.fillRect(0, 0, 260, 260);
-for (const it of mapItems) { mb.fillStyle = it.c; mb.fillRect(toMx(it.x - it.w / 2), toMz(it.z - it.d / 2), it.w * S, it.d * S); }
-function drawMap() {
-  mctx.drawImage(mapBg, 0, 0);
-  for (const p of places) {
-    mctx.fillStyle = p.visited ? '#2a9d8f' : '#ffb703';
-    mctx.beginPath(); mctx.arc(toMx(p.x), toMz(p.z), 8, 0, Math.PI * 2); mctx.fill();
-    mctx.strokeStyle = '#fff'; mctx.lineWidth = 3; mctx.stroke();
+/* ===================== 5) สร้างฉากโรงเรียน ===================== */
+// พื้น
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(140,140),mat(0x8fd16f));
+ground.rotation.x=-Math.PI/2; ground.receiveShadow=true; scene.add(ground);
+slab(84,84,0x9ad77a,0,0,0,0.01);
+
+// ทางเดินและลานเสาธง
+addPath(0,9,4,66);
+addPath(0,4,64,4);
+addPath(-18,-2,4,12);
+addPath(18,-2,4,12);
+addPath(16,8,4,4);
+addPath(-14,8,3,4);
+addPath(-26,13,3,18);
+cyl(5,5,0.05,0xf4e3c1,0,0,4,40).castShadow=false;
+mapItems.push({x:0,z:4,r:5,c:'#f4e3c1'});
+
+// รั้วและประตูโรงเรียน
+(function(){
+  const seg=(x,z,w,d)=>{ box(w,1.1,d,0xfafafa,x,0,z); box(w+0.1,0.12,d+0.1,0xc0392b,x,1.1,z); solid(x,z,w,d); mapItems.push({x,z,w:Math.max(w,0.8),d:Math.max(d,0.8),c:'#ffffff'}); };
+  seg(0,-42,84.4,0.4); seg(-42,0,0.4,84.4); seg(42,0,0.4,84.4); seg(-22.5,42,39,0.4); seg(22.5,42,39,0.4);
+  for(const gx of [-3.4,3.4]){ box(0.9,4.2,0.9,0xc0392b,gx,0,42); box(1.1,0.3,1.1,GOLD,gx,4.2,42); solid(gx,42,0.9,0.9); }
+  box(7.7,0.8,0.7,0xc0392b,0,3.6,42);
+  box(2.2,2.6,2,0xffffff,6,0,39); box(2.6,0.25,2.4,0x3a6ea5,6,2.6,39); box(0.05,0.9,1.2,0x9ad1ff,4.88,1.2,39);
+  solid(6,39,2.2,2); mapItems.push({x:6,z:39,w:2.2,d:2,c:'#a8dadc'});
+})();
+
+// เสาธง + ธงโบก
+box(2.4,0.35,2.4,0xffffff,0,0,4); box(1.6,0.35,1.6,0xe0e0e0,0,0.35,4);
+cyl(0.07,0.09,9,0xf5f5f5,0,0.7,4,10); sph(0.2,GOLD,0,9.85,4);
+solid(0,4,2.4,2.4);
+const flagCanvas=document.createElement('canvas'); flagCanvas.width=300; flagCanvas.height=200;
+(function(){ const g=flagCanvas.getContext('2d');
+  [['#A51931',0,1],['#F4F5F8',1,1],['#2D2A4A',2,2],['#F4F5F8',4,1],['#A51931',5,1]].forEach(([c,s,n])=>{ g.fillStyle=c; g.fillRect(0,s*200/6,300,n*200/6+1); }); })();
+const flagTex=new THREE.CanvasTexture(flagCanvas); flagTex.colorSpace=THREE.SRGBColorSpace;
+const flagGeo=new THREE.PlaneGeometry(3,2,16,6); flagGeo.translate(1.5,0,0);
+const flagBase=Float32Array.from(flagGeo.attributes.position.array);
+const flag=new THREE.Mesh(flagGeo,new THREE.MeshLambertMaterial({map:flagTex,side:THREE.DoubleSide}));
+flag.position.set(0.1,8.6,4); flag.castShadow=true; scene.add(flag);
+
+// หอพระ
+(function(){
+  const x=0,z=-28,w=10,d=8;
+  slab(12,10,0xeee4d0,x,z,0,0.04); mapItems.push({x,z,w:12,d:10,c:'#f1e3c6'});
+  const b=makeHouse({x,z,w,d,h:4,wall:0xfdf6e3,floor:0xc9a66b,mapColor:'#e9c46a'});
+  slab(1.6,6.4,0xa4161a,x,z+0.7,0,0.075);
+  for(const px of [x-w/2,x+w/2]) for(const pz of [z-d/2,z+d/2]) b.deco(cyl(0.3,0.3,4,0xb5171f,px,0,pz,12));
+  b.deco(box(0.25,3.0,0.45,GOLD,x-1.33,0,z+d/2)); b.deco(box(0.25,3.0,0.45,GOLD,x+1.33,0,z+d/2)); b.deco(box(2.9,0.3,0.45,GOLD,x,2.9,z+d/2));
+  for(const wz of [z-1.8,z+1.2]){ b.deco(box(0.1,1.4,1.1,0x8b1a1a,x-w/2-0.18,1.3,wz)); b.deco(box(0.1,1.4,1.1,0x8b1a1a,x+w/2+0.18,1.3,wz)); }
+  const R=b.roof;
+  box(w+1,0.3,d+1,GOLD,x,4,z,R);
+  gable(w+1.8,d+1.8,3.0,0xc0392b,x,4.3,z,false,R);
+  gable(w-1.6,d-0.4,2.8,0xe67e22,x,5.6,z-0.2,false,R);
+  gable(5.4,0.12,1.8,GOLD,x,5.75,z+3.66,false,R);
+  cyl(0,0.13,1.0,GOLD,x,8.35,z+3.6,8,R); cyl(0,0.13,1.0,GOLD,x,8.35,z-4.0,8,R);
+  // แท่นบูชาและพระพุทธรูป
+  box(3.6,0.6,1.4,0x8b1a1a,x,0,z-2.8); box(2.8,0.5,1.1,GOLD,x,0.6,z-2.9); solid(x,z-2.8,3.8,1.6);
+  box(2.6,2.8,0.1,0x7a1010,x,0.6,z-3.7);
+  const by=1.1,bz=z-2.95;
+  cyl(0.8,0.9,0.28,GOLD,x,by,bz,16); box(1.3,0.32,0.8,GOLD,x,by+0.28,bz); box(0.85,0.85,0.5,GOLD,x,by+0.6,bz);
+  sph(0.3,GOLD,x,by+1.72,bz); cyl(0,0.11,0.35,GOLD,x,by+1.98,bz,8);
+  for(const s of [-1,1]){ cyl(0.06,0.06,0.5,0xffffff,x+s*1.5,0.6,z-2.4,8); sph(0.07,FLAME,x+s*1.5,1.17,z-2.4); cyl(0.14,0.1,0.4,GOLD,x+s*0.95,0.6,z-2.3,10); sph(0.22,0xff7eb6,x+s*0.95,1.15,z-2.3); }
+  // ระฆังหน้าหอพระ
+  const bx=-4.4,bz2=-22.4;
+  box(0.2,2.8,0.2,0x7a4a26,bx-0.8,0,bz2); box(0.2,2.8,0.2,0x7a4a26,bx+0.8,0,bz2); box(1.9,0.2,0.25,0x7a4a26,bx,2.8,bz2);
+  cyl(0.25,0.45,0.7,GOLD,bx,1.9,bz2,16); solid(bx,bz2,2,0.4);
+})();
+
+// ห้องสมุด
+let _bookTex=null;
+function bookTex(){
+  if(_bookTex) return _bookTex;
+  const c=document.createElement('canvas'); c.width=512; c.height=384; const g=c.getContext('2d');
+  g.fillStyle='#5d3a1a'; g.fillRect(0,0,512,384);
+  const cols=['#e63946','#457b9d','#2a9d8f','#e9c46a','#f4a261','#8338ec','#ffffff','#06d6a0','#ef476f'];
+  for(let r=0;r<3;r++){ const base=r*128+120; let x=6;
+    while(x<506){ const w=12+Math.random()*16, h=70+Math.random()*40; g.fillStyle=cols[(Math.random()*cols.length)|0]; g.fillRect(x,base-h,w,h); g.fillStyle='rgba(0,0,0,.15)'; g.fillRect(x+w-3,base-h,3,h); x+=w+2; }
+    g.fillStyle='#3e2510'; g.fillRect(0,base,512,8); }
+  _bookTex=new THREE.CanvasTexture(c); _bookTex.colorSpace=THREE.SRGBColorSpace; return _bookTex;
+}
+function bookshelf(cx,cz,len,alongX){
+  const t=bookTex().clone(); t.wrapS=THREE.RepeatWrapping; t.repeat.set(Math.max(1,len/3),1); t.needsUpdate=true;
+  const face=new THREE.Mesh(new THREE.PlaneGeometry(len-0.2,2.1),new THREE.MeshLambertMaterial({map:t}));
+  if(alongX){ box(len,2.4,0.6,0x7a4a26,cx,0,cz); face.position.set(cx,1.2,cz+0.31); solid(cx,cz,len,0.7); }
+  else { box(0.6,2.4,len,0x7a4a26,cx,0,cz); face.rotation.y=Math.PI/2; face.position.set(cx+0.31,1.2,cz); solid(cx,cz,0.7,len); }
+  scene.add(face);
+}
+(function(){
+  const x=-18,z=-12,w=12,d=8;
+  const b=makeHouse({x,z,w,d,h:4.2,wall:0xf6e7c1,floor:0xcaa472,mapColor:'#8ecae6'});
+  for(const wx of [-22.5,-20.6,-15.4,-13.5]) b.deco(box(1.2,1.3,0.1,0x9ad1ff,wx,1.4,z+d/2+0.18));
+  for(const wz of [-14,-10]){ b.deco(box(0.1,1.3,1.4,0x9ad1ff,x-w/2-0.18,1.4,wz)); b.deco(box(0.1,1.3,1.4,0x9ad1ff,x+w/2+0.18,1.4,wz)); }
+  box(w+0.8,0.25,d+0.8,0x2b4c7e,x,4.2,z,b.roof);
+  gable(d+1.6,w+1.4,2.6,0x3a6ea5,x,4.45,z,true,b.roof);
+  bookshelf(x,-15.45,10,true);
+  bookshelf(-23.45,-12.4,4.6,false);
+  for(const tx of [-21,-15]){
+    box(2.4,0.08,1.2,0xc68642,tx,0.74,-11.6); box(0.3,0.74,0.8,0x8d5524,tx,0,-11.6);
+    for(const sx of [-0.7,0.7]) for(const sz of [-1,1]) cyl(0.25,0.25,0.45,0x8d5524,tx+sx,0,-11.6+sz,10);
+    solid(tx,-11.6,2.8,2.6);
   }
-  mctx.save();
-  mctx.translate(toMx(player.position.x), toMz(player.position.z));
-  mctx.rotate(-player.rotation.y);
-  mctx.fillStyle = '#e63946';
-  mctx.beginPath(); mctx.moveTo(0, 12); mctx.lineTo(-8, -8); mctx.lineTo(8, -8); mctx.closePath(); mctx.fill();
-  mctx.restore();
+  cyl(0.06,0.1,0.9,0x8d5524,-13.5,0,-9.2,8); sph(0.35,0x4ea8de,-13.5,1.25,-9.2); solid(-13.5,-9.2,0.6,0.6);
+})();
+
+// อาคารเรียน
+(function(){
+  const x=18,z=-12,w=14,d=8;
+  const b=makeHouse({x,z,w,d,h:4.5,wall:0xf1e3d3,floor:0xd8c3a5,mapColor:'#ddb892'});
+  for(const wx of [12.6,14.8,21.2,23.4]) b.deco(box(1.2,1.3,0.1,0x9ad1ff,wx,1.5,z+d/2+0.18));
+  for(const wz of [-14,-10]){ b.deco(box(0.1,1.3,1.4,0x9ad1ff,x-w/2-0.18,1.5,wz)); b.deco(box(0.1,1.3,1.4,0x9ad1ff,x+w/2+0.18,1.5,wz)); }
+  box(w+0.8,0.25,d+0.8,0x9c3d1f,x,4.5,z,b.roof);
+  gable(d+1.6,w+1.4,2.6,0xc0532f,x,4.75,z,true,b.roof);
+  box(6.3,1.95,0.06,0x6d4c41,x,1.12,-15.82);
+  const board=makeBoard(6,1.7,900,254,(g,W,H)=>{ g.fillStyle='#2f5d50'; g.fillRect(0,0,W,H); g.textAlign='center'; g.fillStyle='#fff'; g.font='54px Itim, sans-serif'; g.fillText('สวัสดีนักเรียนทุกคน',W/2,95); g.fillStyle='#ffe66d'; g.font='40px Itim, sans-serif'; g.fillText('วันนี้: ตอบคำถามครู รับเหรียญรางวัล',W/2,180); });
+  board.position.set(x,2.1,-15.78);
+  box(2,0.85,0.8,0x8d5524,x,0,-14); solid(x,-14,2.1,0.9);
+  for(const dx of [13,15.2,20.8,23]) for(const dz of [-12.2,-10]){
+    box(1.2,0.06,0.7,0xd4a373,dx,0.72,dz); box(1.1,0.7,0.06,0x8d5524,dx,0,dz-0.3);
+    box(0.5,0.45,0.5,0x2c6fd6,dx,0,dz+0.75); box(0.6,0.6,0.06,0x3a86ff,dx,0.45,dz+1.02);
+    solid(dx,dz+0.35,1.2,1.5);
+  }
+})();
+
+// โรงอาหาร (ศาลาโปร่ง)
+(function(){
+  const x=16,z=15,w=14,d=10;
+  const b={x,z,w,d,fade:[],roof:new THREE.Group(),inside:0,walls:false}; scene.add(b.roof); buildings.push(b);
+  slab(w,d,0xdcdcdc,x,z,0,0.06); mapItems.push({x,z,w,d,c:'#f4a261'});
+  for(const [px,pz] of [[9.4,10.4],[22.6,10.4],[9.4,19.6],[16,19.6],[22.6,19.6]]){ cyl(0.25,0.25,4,0xffffff,px,0,pz,12); solid(px,pz,0.6,0.6); }
+  box(w+0.6,0.3,d+0.6,0xf4a261,x,4,z,b.roof);
+  pyramid(w+1.6,d+1.6,2.2,0xe76f51,x,4.3,z,b.roof);
+  box(10,1,0.8,0xffffff,x,0,18.6); box(10.2,0.08,1,0xb0bec5,x,1,18.6); solid(x,18.6,10,0.8);
+  for(const px of [12.5,14.5,17.5,19.5]){ cyl(0.32,0.28,0.38,0x9e9e9e,px,1.08,18.6,14); }
+  box(0.15,3.3,0.15,0x5d4037,12.3,0,20.05); box(0.15,3.3,0.15,0x5d4037,19.7,0,20.05);
+  const menu=makeBoard(7,1.3,980,182,(g,W,H)=>{ g.fillStyle='#fff3c4'; g.fillRect(0,0,W,H); g.strokeStyle='#e76f51'; g.lineWidth=10; g.strokeRect(5,5,W-10,H-10); g.textAlign='center'; g.fillStyle='#e76f51'; g.font='48px Itim, sans-serif'; g.fillText('เมนูวันนี้',W/2,62); g.fillStyle='#333'; g.font='36px Itim, sans-serif'; g.fillText('ข้าวมันไก่ · ก๋วยเตี๋ยว · ผัดกะเพราไข่ดาว · ข้าวไข่เจียว',W/2,135); });
+  menu.rotation.y=Math.PI; menu.position.set(x,2.75,19.98);
+  for(const tx of [12.5,19.5]){
+    box(3,0.08,1.2,0xc68642,tx,0.74,13.2); box(0.3,0.74,0.8,0x8d5524,tx,0,13.2);
+    box(3,0.45,0.4,0x8d5524,tx,0,12.3); box(3,0.45,0.4,0x8d5524,tx,0,14.1);
+    solid(tx,13.2,3,2.2);
+  }
+})();
+
+// ร้านน้ำ
+(function(){
+  const x=-14,z=14;
+  box(6,2.8,0.2,0xf1faee,x,0,15.9); box(0.2,2.8,4,0xf1faee,-17,0,z); box(0.2,2.8,4,0xf1faee,-11,0,z);
+  box(6,1.1,0.6,0x2a9d8f,x,0,12.3); box(6.2,0.08,0.8,0xffffff,x,1.1,12.3);
+  for(let i=0;i<6;i++) box(1.0,0.15,4.8,i%2?0xffffff:0xe63946,-16.5+i,2.8,13.8);
+  [0xe63946,0xf4a261,0x8bc34a,0x6d4c41].forEach((c,i)=>cyl(0.16,0.12,0.4,c,-15.8+i*0.7,1.18,12.3,10));
+  cyl(0.35,0.35,0.8,0x48cae4,-12,1.18,12.4,14);
+  solid(x,z,6.2,4.2); mapItems.push({x,z,w:6,d:4,c:'#e63946'});
+})();
+
+// สนามฟุตบอล
+(function(){
+  const x=-26,z=28,w=18,d=12;
+  slab(w,d,0x4caf50,x,z,0,0.03); mapItems.push({x,z,w,d,c:'#4caf50'});
+  const line=(lw,ld,lx,lz)=>slab(lw,ld,0xffffff,lx,lz,0,0.045);
+  line(w-0.4,0.12,x,z-d/2+0.2); line(w-0.4,0.12,x,z+d/2-0.2); line(0.12,d-0.4,x-w/2+0.2,z); line(0.12,d-0.4,x+w/2-0.2,z); line(0.12,d-0.4,x,z);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(1.8,1.95,40),mat(0xffffff)); ring.rotation.x=-Math.PI/2; ring.position.set(x,0.05,z); scene.add(ring);
+  for(const gx of [-35,-17]){
+    const back=gx<x?-0.9:0.9;
+    cyl(0.08,0.08,2.2,0xffffff,gx,0,26,8); cyl(0.08,0.08,2.2,0xffffff,gx,0,30,8); box(0.16,0.16,4.16,0xffffff,gx,2.2,28);
+    box(0.05,2.2,4,NET,gx+back,0,28).castShadow=false;
+    solid(gx,26,0.3,0.3); solid(gx,30,0.3,0.3); solid(gx+back,28,0.1,4);
+  }
+})();
+
+// ต้นไม้ ไฟทาง ม้านั่ง กระถาง
+function tree(x,z,i){
+  cyl(0.22,0.32,1.8,0x8d5524,x,0,z,8);
+  const c=[0x43a047,0x66bb6a,0x2e7d32][i%3];
+  mk(new THREE.IcosahedronGeometry(1.5,0),c,x,2.8,z); mk(new THREE.IcosahedronGeometry(1.05,0),c,x+0.5,3.7,z-0.3);
+  solid(x,z,0.7,0.7); treeList.push([x,z]);
+}
+[[-38,-38],[-28,-38],[-16,-38],[-6,-37],[6,-37],[16,-38],[28,-38],[38,-38],[38,-28],[38,-16],[38,-4],[38,8],[38,20],[38,32],
+ [-38,-28],[-38,-16],[-38,-4],[-38,8],[-38,18],[-38,38],[-28,38],[-14,38],[14,38],[28,38],[38,38],[-8,-16],[8,-16],
+ [-30,-24],[30,-26],[-8,26],[8,26],[28,28],[-8,18],[10,-2]].forEach((p,i)=>tree(p[0],p[1],i));
+for(const lz of [36,28,20,-12,-18]) for(const lx of [-2.8,2.8]){ cyl(0.07,0.09,3.2,0x37474f,lx,0,lz,8); sph(0.22,LAMP,lx,3.35,lz); solid(lx,lz,0.3,0.3); }
+for(const bx of [-5.5,5.5]){ box(0.6,0.45,1.8,0x8d5524,bx,0,20); box(0.1,0.5,1.8,0x8d5524,bx+(bx<0?-0.3:0.3),0.45,20); solid(bx,20,0.8,2); }
+for(const [px,pz] of [[-20.6,-7.4],[-15.4,-7.4],[15.4,-7.4],[20.6,-7.4]]){ cyl(0.35,0.28,0.5,0xb5651d,px,0,pz,10); sph(0.4,0xff6b9a,px,0.75,pz); solid(px,pz,0.7,0.7); }
+
+// เมฆ
+const clouds=[];
+for(let i=0;i<9;i++){
+  const g=new THREE.Group();
+  for(let k=0;k<3;k++){ const m=new THREE.Mesh(new THREE.BoxGeometry(4+Math.random()*3,1.6,3),mat(0xffffff)); m.position.set(k*2.4-2.4,Math.random()*0.8,Math.random()*1.5); g.add(m); }
+  g.position.set(-70+Math.random()*140,30+Math.random()*8,-70+Math.random()*140); scene.add(g); clouds.push(g);
 }
 
-// ================= วนลูปเกม =================
-const clock = new THREE.Clock();
-let walkPhase = 0;
-function loop() {
-  requestAnimationFrame(loop);
-  const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime, T = now();
-
-  // อ่านปุ่มกดและจอย
-  let fwd = -jy, str = jx;
-  if (keys.KeyW || keys.ArrowUp) fwd += 1;
-  if (keys.KeyS || keys.ArrowDown) fwd -= 1;
-  if (keys.KeyA || keys.ArrowLeft) str -= 1;
-  if (keys.KeyD || keys.ArrowRight) str += 1;
-  const len = Math.hypot(fwd, str);
-  if (len > 1) { fwd /= len; str /= len; }
-
-  // เดินตามทิศที่กล้องหันอยู่
-  const speed = T < boostUntil ? 9 : 5.5;
-  const sy = Math.sin(camYaw), cy = Math.cos(camYaw);
-  const dx = (cy * str - sy * fwd) * speed * dt;
-  const dz = (-sy * str - cy * fwd) * speed * dt;
-  const moving = Math.hypot(dx, dz) > 0.0001;
-  const ud = player.userData;
-  if (moving) {
-    tryMove(dx, 0); tryMove(0, dz);
-    player.rotation.y = lerpAngle(player.rotation.y, Math.atan2(dx, dz), 0.25);
-    walkPhase += dt * speed * 1.8; ud.poseUntil = 0;
-  }
-  // ท่าเดิน / ท่าไหว้
-  const sw = moving ? Math.sin(walkPhase) * 0.7 : 0;
-  ud.legL.rotation.x = sw; ud.legR.rotation.x = -sw;
-  if (T < ud.poseUntil) {
-    ud.armL.rotation.x = ud.armR.rotation.x = -2.0;
-    ud.armL.rotation.z = 0.5; ud.armR.rotation.z = -0.5;
-  } else {
-    ud.armL.rotation.x = -sw * 0.8; ud.armR.rotation.x = sw * 0.8;
-    ud.armL.rotation.z = ud.armR.rotation.z = 0;
-  }
-
-  // กล้องตามตัวละคร
-  const p = player.position;
-  camera.position.set(p.x + sy * camDist, camH, p.z + cy * camDist);
-  camera.lookAt(p.x, 1.5, p.z);
-
-  // ธงโบก
-  const fp = flagGeo.attributes.position;
-  for (let i = 0; i < fp.count; i++) {
-    const x = flagBase[i * 3];
-    fp.setZ(i, Math.sin(x * 2.2 - t * 5) * 0.18 * x / 3);
-  }
-  fp.needsUpdate = true; flagGeo.computeVertexNormals();
-
-  // เหรียญหมุน และ NPC มองซ้ายขวา
-  for (const pl of places) { pl.marker.rotation.y = t * 2; pl.marker.position.y = 2.6 + Math.sin(t * 3) * 0.2; }
-  npcs.forEach((n, i) => n.rotation.y = n.userData.baseRy + Math.sin(t * 0.8 + i) * 0.35);
-
-  // ตรวจว่ายืนใกล้สถานที่ไหน
-  let found = null;
-  for (const pl of places) if (Math.hypot(p.x - pl.x, p.z - pl.z) < pl.r) { found = pl; break; }
-  if (found !== near) {
-    near = found; actBtn.classList.toggle('on', !!near);
-    if (!near && dialogPlace) closeDialog();
-  }
-  promptEl.style.display = near && !dialogOpen ? 'block' : 'none';
-  if (near) promptEl.textContent = `📍 ${near.name} — แตะ "สำรวจ" หรือกด E`;
-  boostEl.style.display = T < boostUntil ? 'block' : 'none';
-
-  drawMap();
-  renderer.render(scene, camera);
+// ป้ายชื่อสถานที่ + เหรียญลอยบอกจุดที่ยังไม่ได้ไป
+const coinGeo=new THREE.CylinderGeometry(0.45,0.45,0.1,24); coinGeo.rotateX(Math.PI/2);
+const coinMarkers={};
+for(const id in LAYOUT){
+  const L=LAYOUT[id];
+  placeLabels[id]=makeLabel(id,L.color,L.label[0],L.label[1],L.label[2],1.4);
+  const c=new THREE.Mesh(coinGeo,COIN); c.position.set(L.spot[0],2.6,L.spot[1]); scene.add(c); coinMarkers[id]=c;
 }
-updateHud();
-loop();
 
-addEventListener('resize', () => {
-  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth, innerHeight);
-});
-</script>
-</body>
-</html>
+/* ===================== 6) ตัวละคร ===================== */
+function makePerson(o){
+  o=o||{};
+  const shirt=o.shirt!=null?o.shirt:0xffffff, pants=o.pants!=null?o.pants:0x1d3557, hair=o.hair!=null?o.hair:0x2b1b10, skin=o.skin!=null?o.skin:0xf1c27d;
+  const root=new THREE.Group(), body=new THREE.Group(); root.add(body);
+  const part=(w,h,d,c,x,y,z,parent)=>{ const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c)); m.position.set(x,y,z); m.castShadow=true; (parent||body).add(m); return m; };
+  const limb=(w,h,d,c,x,y)=>{ const g=new THREE.Group(); g.position.set(x,y,0); body.add(g); part(w,h,d,c,0,-h/2,0,g); return g; };
+  const legL=limb(0.3,0.7,0.3,pants,-0.17,0.7), legR=limb(0.3,0.7,0.3,pants,0.17,0.7);
+  part(0.32,0.12,0.4,0x222222,0,-0.64,0.04,legL); part(0.32,0.12,0.
