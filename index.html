@@ -21,6 +21,11 @@ button{font:inherit;cursor:pointer;border:none;color:inherit}
 /* ---------- HUD ---------- */
 #hud{position:fixed;top:calc(8px + env(safe-area-inset-top));left:calc(58px + env(safe-area-inset-left));display:flex;flex-wrap:wrap;gap:5px;z-index:14;max-width:calc(100vw - 212px)}
 .pill{background:rgba(255,255,255,.95);border-radius:999px;padding:2px 10px;font-size:14px;border:2px solid #ffd166;box-shadow:0 2px 0 rgba(0,0,0,.12);white-space:nowrap}
+.coin{display:inline-block;width:17px;height:17px;border-radius:50%;vertical-align:-3px;margin-right:4px;
+ background:radial-gradient(circle at 34% 28%,#fff3c4 0%,#ffd45e 42%,#e8a51b 72%,#b57a08 100%);
+ box-shadow:inset 0 0 0 1.5px #fbe08a,0 1px 2px rgba(0,0,0,.3);position:relative}
+.coin::after{content:'฿';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;color:#8a5a00;font-weight:700;text-shadow:0 1px 0 rgba(255,255,255,.5)}
+.coin.sm{width:14px;height:14px;vertical-align:-2px}.coin.sm::after{font-size:9px}
 .pill.pink{border-color:#ffafcc}.pill.blue{border-color:#a8dadc}.pill.vio{border-color:#c77dff}.pill.green{border-color:#2a9d8f}
 #burger{position:fixed;top:calc(8px + env(safe-area-inset-top));left:calc(8px + env(safe-area-inset-left));width:44px;height:44px;border-radius:14px;background:#fffdf6;box-shadow:0 3px 8px rgba(0,0,0,.22);font-size:22px;z-index:26}
 body.menu #burger{background:#ffb703;color:#fff}
@@ -128,6 +133,12 @@ body.isAdmin .adminOnly{display:block!important}
 .kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin:8px 0}
 .kpi{background:#fff;border:2px solid #f1e6cc;border-radius:14px;padding:8px;text-align:center;font-size:12px}
 .kpi b{display:block;font-size:22px;color:#e85d04}
+.kpi.real b{color:#2a9d8f}.kpi.fix b{color:#8338ec}
+.todoRow{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #f1e6cc;border-radius:12px;padding:6px 8px;margin-bottom:6px;font-size:14px}
+.todoRow .n{background:#8338ec;color:#fff;border-radius:999px;padding:1px 9px;font-size:13px;flex:none}
+.flrow{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.flrow button{background:#eef3f7;border:2px solid #d8e2ea;border-radius:9px;padding:2px 8px;font-size:12px}
+.flrow button:hover{background:#d8ecff}
 .barL{font-size:13px}
 .bar{height:11px;background:#eee;border-radius:99px;overflow:hidden;margin:4px 0 9px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,#ffb703,#fb8500)}
@@ -179,16 +190,17 @@ window.addEventListener('error',function(e){var b=document.getElementById('err')
 
 <button id="burger">☰</button>
 <div id="hud">
-  <div class="pill" id="hCoins">🪙 0</div>
+  <div class="pill" id="hCoins"><i class="coin"></i><span id="hCoinsN">0</span></div>
   <div class="pill pink" id="hMerit">🙏 0</div>
   <div class="pill blue" id="hStamps">⭐ 0/0</div>
-  <div class="pill vio" id="hQuiz">❓ 0/0</div>
+  <button class="pill vio" id="hQuiz" style="cursor:pointer">❓ 0/0</button>
   <div class="pill green" id="hOnline">⚪ คนเดียว</div>
 </div>
 <div id="drawer">
   <button class="chip hl" id="bDash">📊 แดชบอร์ดของฉัน</button>
   <button class="chip" id="bGo">🗺️ แผนที่ / พาไป</button>
   <button class="chip" id="bChat">💬 แชท</button>
+  <button class="chip" id="bTodo">❓ คำถามที่ยังไม่ได้ตอบ</button>
   <button class="chip" id="bZoom">🔭 ดูทั้งโรงเรียน</button>
   <button class="chip" id="bSeason">🌦️ ฤดูกาล</button>
   <button class="chip" id="bTime">🌗 ช่วงเวลา</button>
@@ -522,25 +534,25 @@ const ACTIONS={
   respect:{name:'คารวะผู้ก่อตั้ง',place:'founder',label:'🙏 คารวะท่านขุน'},
   wai:{name:'กราบพระ',place:'shrine',label:'🙏 กราบพระ'},
   rest:{name:'นั่งพักที่ศาลา',place:'resthut',label:'⛱️ นั่งพักที่ศาลา'},
-  drink:{name:'ซื้อน้ำ',place:'pr',label:'🥤 ซื้อน้ำ (5🪙)'},
-  eat:{name:'กินข้าวโรงอาหาร 1',place:'b4',label:'🍛 กินข้าว (10🪙)'},
-  coop:{name:'ซื้อของร้านสวัสดิการ',place:'b6',label:'🏪 ซื้อของ (8🪙)'},
+  drink:{name:'ซื้อน้ำ',place:'pr',label:'🥤 ซื้อน้ำ (5เหรียญ)'},
+  eat:{name:'กินข้าวโรงอาหาร 1',place:'b4',label:'🍛 กินข้าว (10เหรียญ)'},
+  coop:{name:'ซื้อของร้านสวัสดิการ',place:'b6',label:'🏪 ซื้อของ (8เหรียญ)'},
   borrow:{name:'ยืมหนังสือ',place:'b5',label:'📖 ยืมหนังสือ'},
   read:{name:'อ่านหนังสือกลางแจ้ง',place:'natlib',label:'📚 นั่งอ่านหนังสือ'},
   search:{name:'สืบค้นข้อมูล',place:'b7',label:'💻 สืบค้นข้อมูล'},
-  lab:{name:'ทดลองวิทยาศาสตร์',place:'b6',label:'🔬 ทดลองวิทย์'},
+  lab:{name:'ทดลองวิทยาศาสตร์',place:'b6',lv:1,label:'🔬 ทดลองวิทย์'},
   meditate:{name:'นั่งสมาธิ',place:'buddha',label:'🧘 นั่งสมาธิ'},
   fish:{name:'ให้อาหารปลา',place:'garden',label:'🐟 ให้อาหารปลา'},
-  hoop:{name:'ชู้ตบาส',place:'b4',label:'🏀 ชู้ตบาส'},
+  hoop:{name:'ชู้ตบาส',place:'b4',lv:2,label:'🏀 ชู้ตบาส'},
   volley:{name:'ตบวอลเลย์บอล',place:'dome2',label:'🏐 ตบวอลเลย์'},
-  futsal:{name:'เตะฟุตซอล',place:'b100',label:'⚽ เตะฟุตซอล'},
+  futsal:{name:'เตะฟุตซอล',place:'b100',lv:2,label:'⚽ เตะฟุตซอล'},
   assembly:{name:'เข้าแถว',place:'dome1',label:'🧍 เข้าแถว'},
   quiz:{name:'ตอบคำถามถูก',place:null},
   talk:{name:'คุยกับเพื่อน',place:null},
   photo:{name:'ถ่ายรูป',place:null},
-  floor2:{name:'ขึ้นชั้น 2',place:null},
-  floor5:{name:'ขึ้นชั้น 5',place:null},
-  bridge:{name:'ข้ามสะพานเชื่อมอาคาร',place:null}
+  floor2:{name:'ขึ้นชั้น 2',place:'b9',lv:1},
+  floor5:{name:'ขึ้นชั้น 5',place:'b5',lv:4},
+  bridge:{name:'ข้ามสะพานเชื่อมอาคาร',place:'b3',lv:1}
 };
 /* ปุ่มกิจกรรมที่โผล่ตามสถานที่ (บางอันต้องอยู่ชั้นที่กำหนด) */
 const PLACE_ACTS={
@@ -576,11 +588,13 @@ function sanitize(c){
   return d;
 }
 let config=sanitize(lsGet(LS_CFG)||DEFAULT_CONFIG);
-function freshProg(){ return {coins:config.startCoins,merit:0,books:0,stamps:{},done:{},acts:{},quiz:{total:0,correct:0,hist:[],by:{},solved:{},cleared:{}},badges:{},floors:{},play:0,celebrated:false,name:'',avatar:null}; }
+function freshProg(){ return {coins:config.startCoins,merit:0,books:0,stamps:{},done:{},acts:{},quiz:{total:0,correct:0,hist:[],by:{},solved:{},cleared:{},first:{},fix:{},tries:{}},sport:{},badges:{},floors:{},play:0,celebrated:false,name:'',avatar:null}; }
 let prog=Object.assign(freshProg(),lsGet(LS_SAVE)||{});
 ['stamps','done','acts','badges','floors'].forEach(k=>{ if(!prog[k]||typeof prog[k]!=='object') prog[k]={}; });
 if(!prog.quiz||!Array.isArray(prog.quiz.hist)) prog.quiz=freshProg().quiz;
-['by','solved','cleared'].forEach(k=>{ if(!prog.quiz[k]||typeof prog.quiz[k]!=='object') prog.quiz[k]={}; });
+['by','solved','cleared','first','fix','tries'].forEach(k=>{ if(!prog.quiz[k]||typeof prog.quiz[k]!=='object') prog.quiz[k]={}; });
+if(!prog.sport||typeof prog.sport!=='object') prog.sport={};
+Object.keys(prog.quiz.solved).forEach(k=>{ if(!prog.quiz.first[k]&&!prog.quiz.fix[k]) prog.quiz.first[k]=prog.quiz.solved[k]; });
 const saveProg=()=>lsSet(LS_SAVE,prog);
 const placeById=id=>config.places.find(p=>p.id===id);
 const stampPlaces=()=>config.places.filter(p=>p.stamp);
@@ -716,7 +730,7 @@ const treeMats={round:0x4f9d48,round2:0x6bbf59,pine:0x2f6b3a,blossom:0xff9ec7,go
 for(const k in treeMats) treeMats[k]=new THREE.MeshLambertMaterial({color:treeMats[k],flatShading:true});
 const COINM=new THREE.MeshLambertMaterial({color:0xffc300,emissive:0x6b4f00});
 
-const worldCols=[], mapItems=[], boards=[], facadeMats=[];
+const worldCols=[], mapItems=[], boards=[], facadeMats=[], COURTS={};
 function mk(geo,m,x,y,z,par){ const o=new THREE.Mesh(geo,(typeof m==='number')?mat(m):m); o.position.set(x,y,z); o.castShadow=true; o.receiveShadow=true; (par||scene).add(o); return o; }
 const box=(w,h,d,m,x,y,z,par)=>mk(new THREE.BoxGeometry(w,h,d),m,x,y+h/2,z,par);
 const cyl=(rt,rb,h,m,x,y,z,seg,par)=>mk(new THREE.CylinderGeometry(rt,rb,h,seg||16),m,x,y+h/2,z,par);
@@ -869,10 +883,14 @@ function buildBuilding(S){
           const rim=new THREE.Mesh(new THREE.TorusGeometry(0.28,0.03,6,16),mat(0xff6b00)); rim.rotation.x=Math.PI/2;
           const rp=W(s*(len/2-2.5),0); rim.position.set(rp[0],y+2.55,rp[1]); g.add(rim); b.hoops.push([rp[0],y+2.55,rp[1]]); }
       } else {
+        b.goals=[];
         for(const s of[-1,1]){ const p=W(s*(len/2-1.3),0);
           box(0.5,0.25,3.6,0xffffff,p[0],y+0.05,p[1],g);
           box(0.18,2.1,0.18,0xffffff,p[0],y+0.05,p[1]-1.8,g); box(0.18,2.1,0.18,0xffffff,p[0],y+0.05,p[1]+1.8,g);
-          box(0.12,1.3,3.6,0xe6e6e6,p[0],y+0.8,p[1],g); }
+          box(3.6,0.14,0.14,0xffffff,p[0],y+2.15,p[1],g);
+          box(0.12,1.3,3.6,0xe6e6e6,p[0],y+0.8,p[1],g);
+          b.goals.push([p[0],y+0.9,p[1]]); }
+        b.goalY=y;
       }
     } else if(isOpen){
       /* ชั้นโล่ง: เสา + ห้องเดียวด้านท้าย */
@@ -951,9 +969,12 @@ function buildBuilding(S){
         }
         pb(sc,dcCorr+sgn*(CORR/2-0.25),SB,0.16,1.0,y+FH*0.45,0x9c6644,g);
       }
-      pb(sc-SB/2+0.1,dcCorr,0.2,CORR,WALLH,y,S.wall,g); col(i,sc-SB/2+0.1,dcCorr,0.2,CORR);
-      pb(sc+SB/2-0.1,dcCorr,0.2,CORR,WALLH,y,S.wall,g); col(i,sc+SB/2-0.1,dcCorr,0.2,CORR);
+      /* ผนังเฉพาะด้านนอกอาคาร ส่วนด้านในเปิดออกสู่ระเบียง เดินเข้า-ออกบันไดได้ */
+      const outer=(e===0)?(sc-SB/2+0.1):(sc+SB/2-0.1);
+      pb(outer,dcCorr,0.2,CORR,WALLH,y,S.wall,g); col(i,outer,dcCorr,0.2,CORR);
       pb(sc,-sgn*(dep/2-0.12),SB,0.24,WALLH,y,S.wall,g); col(i,sc,-sgn*(dep/2-0.12),SB,0.24);
+      if(i>0&&!isDeck){ const inn=(e===0)?(sc+SB/2-0.1):(sc-SB/2+0.1);
+        pb(inn,dcCorr+sgn*(CORR/2-0.3),0.18,0.6,1.05,y,0xe9e2d2,g); col(i,inn,dcCorr+sgn*(CORR/2-0.3),0.18,0.6); }
     }
   }
   /* ---- หลังคา ---- */
@@ -1017,12 +1038,17 @@ function changeFloor(dir){
   speak(b.spec.name+' '+b.spec.fl[to][0]);
   updateFloorUI(); saveProg();
   if(to===0&&!inFoot(b,player.position.x,player.position.z)) playerB=null;
+  if(here){ dismissed=null; setTimeout(()=>{ if(here) showInfo(here); },420); }
 }
 let stairKey='';
 function updateFloorUI(){
   const F=$('floorBox'); F.innerHTML='';
   const h=stairHere(), tip=$('stairTip');
   if(playerB) F.append(el('div',{className:'fbtn now',textContent:playerB.spec.name+' · ชั้น '+(playerLv+1)}));
+  const sk=(typeof sportHere==='function')?sportHere():null;
+  for(const k in courtBall){ const cb=courtBall[k]; cb.lb.visible=(k===sk); }
+  if(sk) F.append(el('button',{className:'fbtn pulse',style:'background:#ef476f;color:#fff;border-color:#ef476f',
+    textContent:SPORT_BTN[sk]+'  (B)',onclick:()=>playSport(sk)}));
   if(h){
     if(playerLv+1<h.b.n) F.append(el('button',{className:'fbtn pulse',textContent:'⬆️ ขึ้นชั้น '+(playerLv+2)+'  (R)',onclick:()=>changeFloor(1)}));
     if(playerLv>0) F.append(el('button',{className:'fbtn pulse',textContent:'⬇️ ลงชั้น '+playerLv+'  (V)',onclick:()=>changeFloor(-1)}));
@@ -1260,6 +1286,7 @@ flagMesh.position.set(FX+0.1,9.2,FZ); flagMesh.castShadow=true; scene.add(flagMe
   for(const s of[-1,1]){ cyl(0.09,0.09,2.6,0x9aa5ad,x+s*5.1,0,z,8); solid(x+s*5.1,z,0.3,0.3); }
   const net=new THREE.Mesh(new THREE.PlaneGeometry(9.4,1),new THREE.MeshLambertMaterial({color:0xf4f4f4,transparent:true,opacity:0.75,side:THREE.DoubleSide}));
   net.position.set(x,2.1,z); net.rotation.y=Math.PI/2; scene.add(net);
+  COURTS.volley={x,z,hw:4.5,hd:9};
   signBoard('หลังคาโค้ง 2 · สนามวอลเลย์บอล','#2a6f97','#fff',8,1,x,5.5,z-d/2-0.5,Math.PI);
 })();
 /* ---- ศาลาพุทธชยันตี (ชั้นเดียว เปิดโล่ง) ---- */
@@ -1603,6 +1630,40 @@ function findPath(sx,sz,tx,tz){
   return out;
 }
 
+/* ---- หาเส้นทางภายในอาคาร (ชั้นบน) ---- */
+function floorPath(b,lv,sx,sz,tx,tz){
+  const C=0.45, x0=b.x-b.w/2, z0=b.z-b.d/2, W=Math.max(2,Math.ceil(b.w/C)), H=Math.max(2,Math.ceil(b.d/C));
+  const gi=v=>clamp(Math.floor((v-x0)/C),0,W-1), gj=v=>clamp(Math.floor((v-z0)/C),0,H-1);
+  const px=i=>x0+(i+0.5)*C, pz=j=>z0+(j+0.5)*C;
+  const blk=new Uint8Array(W*H);
+  for(let j=0;j<H;j++) for(let i=0;i<W;i++) blk[j*W+i]=blocked(px(i),pz(j),0.4,lv,b)?1:0;
+  const free=(i,j)=>{ if(blk[j*W+i]) { for(let r=1;r<6;r++) for(let dj=-r;dj<=r;dj++) for(let di=-r;di<=r;di++){
+        if(Math.max(Math.abs(di),Math.abs(dj))!==r) continue; const a=i+di,c=j+dj;
+        if(a>=0&&c>=0&&a<W&&c<H&&!blk[c*W+a]) return [a,c]; } return null; } return [i,j]; };
+  const S0=free(gi(sx),gj(sz)), T0=free(gi(tx),gj(tz)); if(!S0||!T0) return null;
+  const S=S0[1]*W+S0[0], T=T0[1]*W+T0[0];
+  const g=new Float32Array(W*H).fill(Infinity), came=new Int32Array(W*H).fill(-1), cl=new Uint8Array(W*H), hp=[];
+  const push=(n,f)=>{ hp.push([f,n]); let i=hp.length-1; while(i>0){ const q=(i-1)>>1; if(hp[q][0]<=hp[i][0]) break; const t=hp[q]; hp[q]=hp[i]; hp[i]=t; i=q; } };
+  const pop=()=>{ const top=hp[0], last=hp.pop(); if(hp.length){ hp[0]=last; let i=0; for(;;){ const l=2*i+1,r=l+1; let m=i;
+    if(l<hp.length&&hp[l][0]<hp[m][0]) m=l; if(r<hp.length&&hp[r][0]<hp[m][0]) m=r; if(m===i) break; const t=hp[m]; hp[m]=hp[i]; hp[i]=t; i=m; } } return top[1]; };
+  const hh=n=>Math.hypot(n%W-T0[0],((n/W)|0)-T0[1]);
+  g[S]=0; push(S,hh(S)); let found=S===T;
+  while(hp.length&&!found){ const cur=pop(); if(cur===T){ found=true; break; } if(cl[cur]) continue; cl[cur]=1;
+    const ci=cur%W, cj=(cur/W)|0;
+    for(const [di,dj,c] of DIRS){ const ni=ci+di, nj=cj+dj; if(ni<0||nj<0||ni>=W||nj>=H) continue;
+      const n=nj*W+ni; if(blk[n]||cl[n]) continue; if(di&&dj&&(blk[cj*W+ni]||blk[nj*W+ci])) continue;
+      const ng=g[cur]+c; if(ng<g[n]){ g[n]=ng; came[n]=cur; push(n,ng+hh(n)); } } }
+  if(!found) return null;
+  const cells=[]; for(let c=T;c!==-1;c=came[c]){ cells.push(c); if(c===S) break; } cells.reverse();
+  const pts=cells.map(c=>[px(c%W),pz((c/W)|0)]);
+  if(!blocked(tx,tz,0.4,lv,b)) pts[pts.length-1]=[tx,tz];
+  const losF=(a,c)=>{ const L=Math.hypot(c[0]-a[0],c[1]-a[1]), n=Math.max(1,Math.ceil(L/0.25));
+    for(let k=1;k<=n;k++){ const u=k/n; if(blocked(a[0]+(c[0]-a[0])*u,a[1]+(c[1]-a[1])*u,0.4,lv,b)) return false; } return true; };
+  const out=[]; let a=[sx,sz], i=0;
+  while(i<pts.length){ let j=pts.length-1; while(j>i+1&&!losF(a,pts[j])) j--; out.push(pts[j]); a=pts[j]; i=j+1; }
+  return out;
+}
+
 /* =====================================================================
    6) ผู้เล่น · NPC
    ===================================================================== */
@@ -1823,20 +1884,65 @@ pin.rotation.x=Math.PI; pin.visible=false; scene.add(pin);
 let nav={path:[]};
 function drawNavDots(){ navGroup.clear(); let prev=[player.position.x,player.position.z];
   for(const q of nav.path){ const L=Math.hypot(q[0]-prev[0],q[1]-prev[1]); for(let s=0.8;s<L;s+=1.3){ const m=new THREE.Mesh(dotGeo,dotMat); m.position.set(prev[0]+(q[0]-prev[0])*s/L,0.1,prev[1]+(q[1]-prev[1])*s/L); navGroup.add(m); } prev=q; } }
-function goTo(x,z,name,placeId){
-  if(playerLv>0){ toast('ลงมาชั้น 1 ก่อนถึงจะนำทางได้นะ 🪜'); return false; }
-  const P=player.position, p=findPath(P.x,P.z,x,z);
+function pathTo(x,z){
+  const P=player.position;
+  return (playerLv>0&&playerB)?floorPath(playerB,playerLv,P.x,P.z,x,z):findPath(P.x,P.z,x,z);
+}
+function goTo(x,z,name,placeId,cb){
+  const p=pathTo(x,z);
   if(!p||!p.length){ toast('ไปจุดนั้นไม่ได้ ลองเลือกจุดอื่นนะ'); sfx.error(); return false; }
-  nav={path:p,name,placeId,target:[x,z],stuck:0,replan:0}; pose={type:null,until:0}; drawNavDots();
-  const e=p[p.length-1]; pin.position.set(e[0],1.7,e[1]); pin.visible=true; $('nav').classList.add('show'); updateNavText(); sfx.pop(); return true;
+  nav={path:p,name,placeId,target:[x,z],stuck:0,replan:0,cb}; pose={type:null,until:0}; drawNavDots();
+  const e=p[p.length-1]; pin.position.set(e[0],player.position.y+1.7,e[1]); pin.visible=true;
+  $('nav').classList.add('show'); updateNavText(); sfx.pop(); return true;
 }
 function stopNav(){ nav={path:[]}; navGroup.clear(); pin.visible=false; $('nav').classList.remove('show'); }
-function replan(){ const P=player.position, p=findPath(P.x,P.z,nav.target[0],nav.target[1]); if(p&&p.length){ nav.path=p; drawNavDots(); } else stopNav(); }
+function replan(){ const p=pathTo(nav.target[0],nav.target[1]); if(p&&p.length){ nav.path=p; drawNavDots(); } else { const cb=nav.cb; stopNav(); if(cb) cb(false); } }
 function navRemain(){ let d=0, a=[player.position.x,player.position.z]; for(const q of nav.path){ d+=Math.hypot(q[0]-a[0],q[1]-a[1]); a=q; } return d; }
-function updateNavText(){ if(nav.path.length) $('navText').textContent=`🧭 ${nav.name||'จุดที่เลือก'} · ${Math.round(navRemain())} ม.`; }
-function arrive(){ const nm=nav.name, pid=nav.placeId; stopNav(); sfx.pop(); if(nm) toast('ถึง '+nm+' แล้ว'); if(pid&&here===pid){ dismissed=null; showInfo(pid); } }
+function updateNavText(){ if(nav.path.length) $('navText').textContent=`🧭 ${nav.name||'จุดที่เลือก'} · ${Math.round(navRemain())} ม.`+(travel?` (${travel.i+1}/${travel.steps.length})`:''); }
+function arrive(){
+  const nm=nav.name, pid=nav.placeId, cb=nav.cb; stopNav(); sfx.pop();
+  if(nm&&!travel) toast('ถึง '+nm+' แล้ว');
+  if(pid&&here===pid){ dismissed=null; showInfo(pid); }
+  if(cb) cb(true);
+}
 function goPlace(id){ const L=LAYOUT[id], p=placeById(id); if(L) goTo(L.spot[0],L.spot[1],p?p.icon+' '+p.name:id,id); }
-$('navCancel').onclick=()=>{ stopNav(); toast('ยกเลิกการนำทางแล้ว'); };
+/* ---------- เดินทางหลายขั้นตอน (ข้ามชั้น) ---------- */
+let travel=null;
+function cancelTravel(){ travel=null; }
+function corridorPoint(b,off){ const dp=b.sgn*(b.dep/2-CORR/2), lp=off||0; return b.horiz?[b.x+lp,b.z+dp]:[b.x+dp,b.z+lp]; }
+function runTravel(){
+  if(!travel) return;
+  const st=travel.steps[travel.i];
+  if(!st){ const fin=travel.label; travel=null; if(fin) toast('ถึง '+fin+' แล้ว 🎉'); return; }
+  if(st.t==='walk'){
+    const ok=goTo(st.x,st.z,st.label||travel.label,st.pid,ok2=>{
+      if(!ok2){ if(travel&&travel.i>=travel.steps.length-1) toast('มาถึงใกล้ ๆ แล้ว เดินต่ออีกนิดนะ'); travel=null; return; }
+      travel.i++; runTravel(); });
+    if(!ok){ toast('นำทางต่อไม่ได้ ลองเดินเองนะ'); travel=null; }
+  } else if(st.t==='up'||st.t==='down'){
+    changeFloor(st.t==='up'?1:-1);
+    setTimeout(()=>{ if(travel){ travel.i++; runTravel(); } },760);
+  }
+}
+function goPlaceFloor(id,lv){
+  lv=lv|0;
+  const b=BI[id], p=placeById(id);
+  if(!b){ goPlace(id); return; }
+  if(lv>=b.n) lv=b.n-1;
+  if(playerB===b&&playerLv===lv){ const c=corridorPoint(b,0); goTo(c[0],c[1],b.spec.fl[lv][0]); return; }
+  const steps=[], label=p.name+' · '+b.spec.fl[lv][0];
+  if(playerLv>0&&playerB){
+    const cur=playerB, ss=cur.stairs.find(q=>q.lv===playerLv);
+    if(ss) steps.push({t:'walk',x:ss.x,z:ss.z,label:'บันได '+cur.spec.name});
+    for(let i=playerLv;i>0;i--) steps.push({t:'down'});
+  }
+  const g0=b.stairs.find(q=>q.lv===0);
+  steps.push({t:'walk',x:g0.x,z:g0.z,label:'บันได '+b.spec.name,pid:id});
+  for(let i=0;i<lv;i++) steps.push({t:'up'});
+  if(lv>0){ const c=corridorPoint(b,0); steps.push({t:'walk',x:c[0],z:c[1],label}); }
+  travel={steps,i:0,label}; toast('🧭 กำลังพาไป '+label); runTravel();
+}
+$('navCancel').onclick=()=>{ cancelTravel(); stopNav(); toast('ยกเลิกการนำทางแล้ว'); };
 
 /* =====================================================================
    9) ภารกิจ · กิจกรรม · คำถาม · เหรียญตรา
@@ -1861,7 +1967,7 @@ const BADGES=[
 function checkBadges(){ for(const b of BADGES) if(!prog.badges[b.id]&&b.ok()){ prog.badges[b.id]=Date.now(); setTimeout(()=>{ toast(`🏅 ได้เหรียญตรา ${b.icon} ${b.name}`); sfx.win(); },700); } }
 function checkMissions(type,target){
   let got=false;
-  for(const m of activeMissions()){ if(prog.done[m.id]||m.type!==type||m.target!==target) continue; prog.done[m.id]=Date.now(); prog.coins+=m.reward; got=true; toast(`🎯 สำเร็จ: ${m.title} +${m.reward}🪙`); sfx.win(); }
+  for(const m of activeMissions()){ if(prog.done[m.id]||m.type!==type||m.target!==target) continue; prog.done[m.id]=Date.now(); prog.coins+=m.reward; got=true; toast(`🎯 สำเร็จ: ${m.title} +${m.reward}เหรียญ`); sfx.win(); }
   if(!got) return;
   const all=activeMissions();
   if(all.length&&all.every(m=>prog.done[m.id])&&!prog.celebrated){ prog.celebrated=true; setPose('cheer',3);
@@ -1871,6 +1977,79 @@ function doAction(k){ const a=prog.acts[k]||{n:0}; prog.acts[k]={n:(a.n||0)+1,la
 const BOOKS=['พระอภัยมณี','สี่แผ่นดิน','ข้างหลังภาพ','วิทยาศาสตร์น่ารู้','ประวัติศาสตร์ไทย','คู่มือเตรียมสอบ'];
 let ballShot=null, meditateT=0;
 const ball=sph(0.24,mat(0xe67e22),0,-9,0); ball.visible=false;
+function sportRec(k,hit){ const sp=prog.sport||(prog.sport={}); const r=sp[k]||(sp[k]={t:0,h:0}); r.t++; if(hit) r.h++; saveProg(); }
+const sportText=k=>{ const r=(prog.sport||{})[k]; return r?` (${r.h}/${r.t} ครั้ง)`:''; };
+function launchBall(from,to,dur,col,arc,onLand){
+  ball.visible=true; ball.material=mat(col);
+  ballShot={a:from,b:to,t:0,dur,arc:arc||2.6,fall:0,onLand};
+}
+function updateBall(dt){
+  if(!ballShot) return;
+  if(ballShot.t<ballShot.dur){
+    ballShot.t+=dt; const u=Math.min(1,ballShot.t/ballShot.dur), a=ballShot.a, b2=ballShot.b;
+    ball.position.set(a[0]+(b2[0]-a[0])*u,a[1]+(b2[1]-a[1])*u+Math.sin(Math.PI*u)*ballShot.arc,a[2]+(b2[2]-a[2])*u);
+    ball.rotation.x+=dt*9; ball.rotation.z+=dt*5;
+    if(u>=1&&ballShot.onLand){ const f=ballShot.onLand; ballShot.onLand=null; f(); }
+  } else { ballShot.fall+=dt; ball.position.y=Math.max(0.24,ball.position.y-dt*6);
+    if(ballShot.fall>1.1){ ball.visible=false; ballShot=null; } }
+}
+/* 🏀 ชู้ตบาส — ต้องอยู่สนามบาสดาดฟ้าอาคาร 4 */
+function shootHoop(){
+  if(ballShot) return;
+  const b=BI.b4;
+  if(playerB!==b||playerLv!==b.spec.deck){ askGo('ต้องขึ้นไปสนามบาสชั้น 3 อาคาร 4 ก่อนนะ 🏀','b4',b.spec.deck); return; }
+  const P=player.position; let best=null,bd=1e9;
+  for(const h of b.hoops){ const d=Math.hypot(h[0]-P.x,h[2]-P.z); if(d<bd){ bd=d; best=h; } }
+  if(!best) return;
+  player.rotation.y=Math.atan2(best[0]-P.x,best[2]-P.z);
+  const ok=Math.random()<clamp(1.12-bd*0.055,0.3,0.94);
+  setPose('shoot',0.8); sfx.pop();
+  launchBall(ballFrom('hoop'),ok?best.slice():[best[0]+rand(-1.1,1.1),best[1]-0.45,best[2]+rand(-0.9,0.9)],0.8+bd*0.04,0xe67e22,2.8,()=>{
+    sportRec('hoop',ok); ballHome('hoop');
+    if(ok){ toast('🏀 ลงห่วง! สุดยอด'+sportText('hoop')); sfx.win(); setPose('cheer',1.5); doAction('hoop'); }
+    else { toast('โอ๊ะ ไม่ลง ลองใหม่อีกครั้ง!'+sportText('hoop')); sfx.bounce(); }
+    if(here) showInfo(here);
+  });
+}
+/* 🏐 ตบวอลเลย์ — ต้องยืนในสนามใต้หลังคาโค้ง 2 */
+function spikeVolley(){
+  if(ballShot) return;
+  const C=COURTS.volley;
+  if(!C){ return; }
+  const P=player.position;
+  if(playerLv!==0||Math.abs(P.x-C.x)>C.hw+1.5||Math.abs(P.z-C.z)>C.hd+1.5){ askGo('ต้องยืนในสนามวอลเลย์ใต้หลังคาโค้ง 2 ก่อนนะ 🏐','dome2',0); return; }
+  const side=(P.z>C.z)?1:-1;                       // ฝั่งที่ผู้เล่นยืน
+  const dNet=Math.abs(P.z-C.z);                    // ระยะจากตาข่าย
+  const good=Math.random()<clamp(0.95-Math.abs(dNet-4.5)*0.06,0.3,0.95);
+  const tz=good?C.z-side*rand(1.5,C.hd-1):C.z-side*(C.hd+rand(0.8,2.6));
+  const tx=good?C.x+rand(-C.hw+0.8,C.hw-0.8):C.x+(Math.random()<0.5?-1:1)*(C.hw+rand(0.5,2));
+  player.rotation.y=Math.atan2(tx-P.x,tz-P.z);
+  setPose('spike',1.5); sfx.whistle();
+  launchBall(ballFrom('volley'),[tx,0.3,tz],0.95,0xf4a261,2.2,()=>{
+    sportRec('volley',good); ballHome('volley');
+    if(good){ toast('🏐 ลงในสนาม! ได้แต้ม'+sportText('volley')); sfx.win(); setPose('cheer',1.3); doAction('volley'); }
+    else { toast('ออกนอกสนาม! ลองใหม่'+sportText('volley')); sfx.bounce(); }
+    if(here) showInfo(here);
+  });
+}
+/* ⚽ เตะฟุตซอล — ต้องขึ้นไปสนามฟุตซอลดาดฟ้าอาคาร 100 ปี */
+function kickFutsal(){
+  if(ballShot) return;
+  const b=BI.b100;
+  if(playerB!==b||playerLv!==b.spec.deck||!b.goals){ askGo('ต้องขึ้นไปสนามฟุตซอลชั้น 3 อาคาร 100 ปี ก่อนนะ ⚽','b100',b.spec.deck); return; }
+  const P=player.position; let best=null,bd=1e9;
+  for(const g of b.goals){ const d=Math.hypot(g[0]-P.x,g[2]-P.z); if(d<bd){ bd=d; best=g; } }
+  if(!best) return;
+  player.rotation.y=Math.atan2(best[0]-P.x,best[2]-P.z);
+  const ok=Math.random()<clamp(1.0-bd*0.045,0.25,0.9);
+  setPose('kick',1.5); sfx.whistle();
+  launchBall(ballFrom('futsal'),ok?[best[0],best[1]-0.2,best[2]+rand(-1.2,1.2)]:[best[0]+rand(-1,1),best[1]+rand(1.4,2.4),best[2]+(Math.random()<0.5?-1:1)*rand(2.2,3.4)],0.55+bd*0.03,0xffffff,1.1,()=>{
+    sportRec('futsal',ok); ballHome('futsal');
+    if(ok){ toast('⚽ เข้าประตู! โกล์'+sportText('futsal')); sfx.win(); setPose('cheer',1.5); doAction('futsal'); }
+    else { toast('บอลออกนอกกรอบ ลองใหม่!'+sportText('futsal')); sfx.bounce(); }
+    if(here) showInfo(here);
+  });
+}
 const ACT={
   flag(){ setPose('stand',5); sfx.anthem(); toast('ยืนตรง! เคารพธงชาติ 🇹🇭'); doAction('flag'); },
   respect(){ setPose('wai',2.6); sfx.pop(); prog.merit++; toast('คารวะท่านขุนสมุทรมณีรัตน์ 🙏 +1 บุญ'); doAction('respect'); },
@@ -1879,39 +2058,62 @@ const ACT={
   drink(){ if(!pay(5)) return; boostUntil=now()+15; toast('สดชื่น! เดินเร็วขึ้น 15 วินาที ⚡'); doAction('drink'); },
   eat(){ if(!pay(10)) return; setPose('sit',3); toast('อิ่มอร่อยจากโรงอาหาร 1 😋'); doAction('eat'); },
   coop(){ if(!pay(8)) return; setPose('cheer',1.2); toast('ซื้อของจากร้านค้าสวัสดิการแล้ว 🏪'); doAction('coop'); },
-  borrow(){ if(prog.books>=3) return toast('ยืมครบ 3 เล่มแล้ว'); prog.books++; sfx.pop(); toast(`ยืม "${pick(BOOKS)}" (${prog.books}/3)`); doAction('borrow'); },
+  borrow(){ if(prog.books>=3) return toast('ยืมครบ 3 เล่มแล้ว'); prog.books++; sfx.pop(); toast('ยืม "'+pick(BOOKS)+'" ('+prog.books+'/3)'); doAction('borrow'); },
   read(){ stopNav(); setPose('sit',9999); toast('อ่านหนังสือใต้ร่มไม้ สบายใจจัง 📚'); doAction('read'); },
   search(){ setPose('think',2.5); const r=pick(['ค้นข้อมูลจังหวัดสมุทรสาครได้แล้ว','ดาวน์โหลดใบงานเรียบร้อย','จองหนังสือออนไลน์สำเร็จ']); toast('💻 '+r); doAction('search'); },
   lab(){ const r=pick(['ผสมเบกกิ้งโซดากับน้ำส้มสายชู เกิดฟองฟู่!','กระดาษลิตมัสเปลี่ยนเป็นสีแดง แปลว่าเป็นกรด','เลนส์นูนรวมแสงที่จุดโฟกัสได้']); setPose('cheer',1.3); toast('🔬 '+r); speak(r); doAction('lab'); },
   meditate(){ stopNav(); setPose('meditate',9999); meditateT=now(); toast('หลับตา กำหนดลมหายใจ... 🧘'); doAction('meditate'); },
   fish(){ feedUntil=now()+5; sfx.splash(); for(let i=0;i<12;i++){ const m=sph(0.05,mat(0x8b5a2b),PX+rand(-1.2,1.2),1.3,PZ+rand(-1.2,1.2)); pellets.push(m); } toast('ปลามารุมกินอาหารใหญ่เลย 🐟'); doAction('fish'); },
-  hoop(){ shootBall('hoop'); },
-  volley(){ const P=player.position, a=player.rotation.y;
-    setPose('spike',1.6); sfx.whistle(); ballThrow(P.x+Math.sin(a)*6,0.4,P.z+Math.cos(a)*6,0xf4a261); toast('ตบวอลเลย์ลงสนามพอดี! 🏐'); doAction('volley'); },
-  futsal(){ const P=player.position, a=player.rotation.y;
-    setPose('kick',1.6); sfx.whistle(); ballThrow(P.x+Math.sin(a)*8,P.y+0.4,P.z+Math.cos(a)*8,0xffffff); toast('ยิงประตูฟุตซอล! ⚽'); doAction('futsal'); },
+  hoop(){ shootHoop(); },
+  volley(){ spikeVolley(); },
+  futsal(){ kickFutsal(); },
   assembly(){ setPose('stand',4); sfx.schoolBell(); toast('เข้าแถวเรียบร้อย ยืนตรง ๆ นะ 🧍'); doAction('assembly'); }
 };
-function ballThrow(x,y,z,col){
-  ball.visible=true; ball.material=mat(col); ballShot={a:[player.position.x,player.position.y+1.6,player.position.z],b:[x,y,z],t:0,dur:0.8,fall:0,ok:true};
+/* ---------- ลูกบอลที่วางอยู่บนสนามจริง ---------- */
+const courtBall={};
+function makeCourtBall(key,col,x,y,z,label,tip){
+  const m=sph(0.25,mat(col),x,y,z); m.castShadow=true;
+  const lb=makeLabel(label,'#ef476f',x,y+1.25,z,0.66); lb.visible=false;
+  courtBall[key]={m,lb,home:[x,y,z],ph:Math.random()*6,tip};
 }
-function shootBall(kind){
-  const b=playerB;
-  if(!b||!b.hoops||playerLv!==b.spec.deck){ toast('ขึ้นไปสนามบาสชั้น 3 อาคาร 4 ก่อนนะ 🏀'); return; }
-  const P=player.position; let best=null,bd=1e9; for(const h of b.hoops){ const d=Math.hypot(h[0]-P.x,h[2]-P.z); if(d<bd){ bd=d; best=h; } }
-  if(!best||bd>12) return;
-  player.rotation.y=Math.atan2(best[0]-P.x,best[2]-P.z);
-  const ok=Math.random()<clamp(1.05-bd*0.07,0.25,0.92);
-  ball.visible=true; ball.material=mat(0xe67e22);
-  ballShot={a:[P.x,P.y+1.9,P.z],b:ok?best.slice():[best[0]+rand(-1,1),best[1]-0.3,best[2]+rand(-0.8,0.8)],t:0,dur:0.8+bd*0.04,ok,hoop:true,fall:0};
-  setPose('shoot',0.7); sfx.pop();
+(function(){
+  const b4=BI.b4, b100=BI.b100;
+  if(b4&&b4.spec.deck!=null) makeCourtBall('hoop',0xe67e22,b4.x,b4.spec.deck*FH+0.35,b4.z+2.5,'🏀 กดปุ่ม "ชู้ตบาส" หรือกด B','ชู้ตบาส');
+  if(b100&&b100.spec.deck!=null) makeCourtBall('futsal',0xf5f5f5,b100.x,b100.spec.deck*FH+0.35,b100.z,'⚽ กดปุ่ม "เตะบอล" หรือกด B','เตะฟุตซอล');
+  if(COURTS.volley) makeCourtBall('volley',0xf4a261,COURTS.volley.x,0.35,COURTS.volley.z+3.5,'🏐 กดปุ่ม "ตบวอลเลย์" หรือกด B','ตบวอลเลย์');
+})();
+/* อยู่ในสนามกีฬาไหน (null = ไม่ได้อยู่สนาม) */
+function sportHere(){
+  const b4=BI.b4, b100=BI.b100, P=player.position;
+  if(b4&&playerB===b4&&playerLv===b4.spec.deck) return 'hoop';
+  if(b100&&playerB===b100&&playerLv===b100.spec.deck) return 'futsal';
+  const C=COURTS.volley;
+  if(C&&playerLv===0&&Math.abs(P.x-C.x)<C.hw+1.5&&Math.abs(P.z-C.z)<C.hd+1.5) return 'volley';
+  return null;
 }
-function updateBall(dt){
-  if(!ballShot) return;
-  if(ballShot.t<ballShot.dur){ ballShot.t+=dt; const u=Math.min(1,ballShot.t/ballShot.dur), a=ballShot.a, b=ballShot.b;
-    ball.position.set(a[0]+(b[0]-a[0])*u,a[1]+(b[1]-a[1])*u+Math.sin(Math.PI*u)*2.6,a[2]+(b[2]-a[2])*u);
-    if(u>=1&&ballShot.hoop){ if(ballShot.ok){ toast('🏀 ลงห่วง! สุดยอด'); sfx.win(); setPose('cheer',1.4); doAction('hoop'); } else { toast('โอ๊ะ ไม่ลง ลองใหม่!'); sfx.bounce(); } } }
-  else { ballShot.fall+=dt; ball.position.y=Math.max(0.24,ball.position.y-dt*6); if(ballShot.fall>0.9){ ball.visible=false; ballShot=null; } }
+const SPORT_BTN={hoop:'🏀 ชู้ตบาส',volley:'🏐 ตบวอลเลย์',futsal:'⚽ เตะบอล'};
+function doSport(k){ if(k==='hoop') shootHoop(); else if(k==='volley') spikeVolley(); else kickFutsal(); }
+/* กดเล่นกีฬา: ถ้ายังไม่ได้ยืนตรงลูกบอล จะเดินไปหาลูกบอลกลางสนามให้ก่อน แล้วค่อยเล่น */
+function playSport(k){
+  k=k||sportHere(); if(!k){ toast('ต้องยืนในสนามกีฬาก่อนนะ'); return; }
+  if(ballShot) return;
+  const cb=courtBall[k];
+  if(!cb) return doSport(k);
+  const P=player.position, d=Math.hypot(cb.home[0]-P.x,cb.home[2]-P.z);
+  if(d<=2.4) return doSport(k);
+  toast('เดินไปที่ลูกบอลกลางสนาม… '+cb.tip);
+  if(!goTo(cb.home[0],cb.home[2],cb.tip,null,ok=>{ if(ok) setTimeout(()=>doSport(k),260); })) doSport(k);
+}
+function ballFrom(key){
+  const cb=courtBall[key];
+  if(cb){ cb.m.visible=false; return cb.home.slice(); }
+  const P=player.position; return [P.x,P.y+0.4,P.z];
+}
+function ballHome(key){ const cb=courtBall[key]; if(cb) setTimeout(()=>{ cb.m.visible=true; },500); }
+function askGo(msg,pid,lv){
+  showDialog('🚩 ยังไปไม่ถึงจุดเล่น',msg,[
+    {label:'พาไปเลย',cls:'o',fn:()=>goPlaceFloor(pid,lv)},
+    {label:'ไว้ก่อน',cls:'g'}]);
 }
 function openQuiz(id){
   const pool=quizPool(id), p=placeById(id);
@@ -1923,28 +2125,66 @@ function openQuiz(id){
     q.choices.map((c,i)=>({label:c,cls:'b',fn:()=>answer(id,q,i)})).concat([{label:'ไว้ก่อน',cls:'g',fn:()=>{ pose={type:null,until:0}; }}]));
   speak(q.q);
 }
+const SC_FIRST=5, SC_FIX=2;
+function qStat(){
+  let first=0,fix=0,left=0;
+  config.quiz.forEach(q=>{ if(prog.quiz.first[q.q]) first++; else if(prog.quiz.solved[q.q]) fix++; else left++; });
+  return {first,fix,left,total:config.quiz.length,real:first*SC_FIRST,fixScore:fix*SC_FIX,max:config.quiz.length*SC_FIRST};
+}
 function answer(id,q,i){
-  const ok=i===q.answer, Q=prog.quiz, by=Q.by[id]||(Q.by[id]={total:0,correct:0});
+  const ok=i===q.answer, Q=prog.quiz, by=Q.by[id]||(Q.by[id]={total:0,correct:0}), key=q.q;
   Q.total++; by.total++; if(ok){ Q.correct++; by.correct++; }
-  Q.hist.push({place:id,q:q.q,a:q.choices[i],ok,t:Date.now()}); if(Q.hist.length>80) Q.hist.shift();
+  Q.tries[key]=(Q.tries[key]||0)+1;
+  Q.hist.push({place:id,q:key,a:q.choices[i],ok,t:Date.now(),n:Q.tries[key]}); if(Q.hist.length>80) Q.hist.shift();
   const tch=teachers[id];
   if(ok){
-    const first=!Q.solved[q.q]; Q.solved[q.q]=Date.now();
-    prog.coins+=first?5:1; sfx.win(); setPose('cheer',1.4); toast(first?'ถูกต้อง! เก่งมาก +5🪙':'ถูกต้อง! (ตอบซ้ำ +1🪙)');
+    const already=!!Q.solved[key];
+    if(!already){
+      Q.solved[key]=Date.now();
+      if(Q.tries[key]===1){ Q.first[key]=Date.now(); prog.coins+=SC_FIRST;
+        toast('✅ ถูกตั้งแต่ครั้งแรก! ได้คะแนนจริง '+SC_FIRST+' คะแนน'); }
+      else { Q.fix[key]=Date.now(); prog.coins+=SC_FIX;
+        toast('✅ ถูกต้องแล้ว! นับเป็นคะแนนแก้ '+SC_FIX+' คะแนน (ตอบครั้งที่ '+Q.tries[key]+')'); }
+    } else { prog.coins+=1; toast('✅ ทบทวนถูกต้อง (ได้ 1 เหรียญ ไม่เพิ่มคะแนนสอบ)'); }
+    sfx.win(); setPose('cheer',1.4);
     if(tch) bubble(tch.g,'เก่งมาก! 👏');
     const pool=quizPool(id);
-    if(!Q.cleared[id]&&pool.every(x=>Q.solved[x.q])){ Q.cleared[id]=Date.now(); prog.coins+=10; setTimeout(()=>{ toast(`🎓 ตอบครบทุกข้อของ${placeById(id).name}! โบนัส +10🪙`); sfx.win(); },900); }
+    if(!Q.cleared[id]&&pool.every(x=>Q.solved[x.q])){ Q.cleared[id]=Date.now(); prog.coins+=10;
+      setTimeout(()=>{ toast('🎓 ตอบครบทุกข้อของ'+placeById(id).name+'! โบนัส 10 เหรียญ'); sfx.win(); },900); }
     checkMissions('action','quiz_'+id); doAction('quiz');
   } else {
-    pose={type:null,until:0}; sfx.error(); toast('ยังไม่ถูกนะ คำตอบคือ '+q.choices[q.answer]);
+    pose={type:null,until:0}; sfx.error();
+    toast('❌ ยังไม่ถูก — คำตอบคือ "'+q.choices[q.answer]+'" ตอบใหม่ได้ จะนับเป็นคะแนนแก้');
     if(tch) bubble(tch.g,'ไม่เป็นไร ลองใหม่นะ'); checkBadges(); saveProg(); updateHud();
   }
   refreshQuizMarks(); if(here===id) showInfo(id);
 }
+/* ---------- รายการคำถามที่ยังไม่ได้ตอบ ---------- */
+function todoList(){
+  const out=[];
+  config.places.forEach(p=>{ const pool=quizPool(p.id); if(!pool.length) return;
+    const left=pool.filter(q=>!prog.quiz.solved[q.q]);
+    const fix=pool.filter(q=>prog.quiz.solved[q.q]&&!prog.quiz.first[q.q]);
+    if(left.length) out.push({id:p.id,icon:p.icon,name:p.name,left:left.length,total:pool.length,fix:fix.length});
+  });
+  return out;
+}
+function openTodo(){
+  const list=todoList(), st=qStat(), node=el('div',{style:'text-align:left'});
+  node.append(el('div',{className:'hint',style:'font-size:14px;color:#333',
+    textContent:`คะแนนจริง ${st.real} / ${st.max} คะแนน · คะแนนแก้ ${st.fixScore} คะแนน · เหลือยังไม่ตอบ ${st.left} ข้อ`}));
+  if(!list.length) node.append(el('p',{style:'text-align:center;font-size:17px;margin:12px 0',textContent:'🎉 ตอบครบทุกข้อแล้ว เก่งมาก!'}));
+  list.forEach(r=>node.append(el('div',{className:'todoRow'},
+    el('span',{textContent:r.icon}),
+    el('span',{style:'flex:1;min-width:0',textContent:r.name+(r.fix?' · แก้แล้ว '+r.fix+' ข้อ':'')}),
+    el('span',{className:'n',textContent:'เหลือ '+r.left+'/'+r.total}),
+    el('button',{className:'mini2',textContent:'พาไป',onclick:()=>{ hide('dlg'); goPlace(r.id); }}))));
+  showDialog('❓ คำถามที่ยังไม่ได้ตอบ','',[{label:'ปิด',cls:'g'}],node);
+}
 function showStampPop(p){ $('spIcon').textContent=p.icon; $('spName').textContent=p.name; const s=$('stampPop'); s.classList.add('show'); setTimeout(()=>s.classList.remove('show'),1500); }
 function enterPlace(id){
   const p=placeById(id); if(!p) return;
-  if(p.stamp&&!prog.stamps[id]){ prog.stamps[id]=Date.now(); prog.coins+=5; if(coinMarkers[id]) coinMarkers[id].visible=false; sfx.stamp(); showStampPop(p); toast(`⭐ ได้สแตมป์ ${p.name} +5🪙`); checkMissions('visit',id); checkBadges(); saveProg(); updateHud(); }
+  if(p.stamp&&!prog.stamps[id]){ prog.stamps[id]=Date.now(); prog.coins+=5; if(coinMarkers[id]) coinMarkers[id].visible=false; sfx.stamp(); showStampPop(p); toast(`⭐ ได้สแตมป์ ${p.name} +5เหรียญ`); checkMissions('visit',id); checkBadges(); saveProg(); updateHud(); }
   else checkMissions('visit',id);
   if(dismissed!==id) showInfo(id);
   const T=now(); p._spoke=p._spoke||0; if(T-p._spoke>25){ p._spoke=T; speak(p.name+'. '+p.info); }
@@ -1962,8 +2202,9 @@ function showInfo(id){
   if(pool.length) Bx.append(el('button',{className:'btn v',textContent:`❓ ตอบคำถาม (${solvedIn(id)}/${pool.length})`,onclick:()=>openQuiz(id)}));
   (PLACE_ACTS[id]||[]).forEach(([k,lv])=>{
     const okLv=(playerLv===lv)||(lv===0&&!B);
-    Bx.append(el('button',{className:'btn'+(okLv?' o':' g'),textContent:ACTIONS[k].label+(okLv?'':' (ชั้น '+(lv+1)+')'),
-      onclick:()=>{ if(!okLv){ toast('ต้องขึ้นไปชั้น '+(lv+1)+' ก่อนนะ 🪜'); return; } ACT[k](); }}));
+    const extra=(k==='hoop'||k==='volley'||k==='futsal')?sportText(k):'';
+    Bx.append(el('button',{className:'btn'+(okLv?' o':' g'),textContent:ACTIONS[k].label+extra+(okLv?'':' → พาขึ้นชั้น '+(lv+1)),
+      onclick:()=>{ if(!okLv){ goPlaceFloor(id,lv); return; } ACT[k](); }}));
   });
   Bx.append(el('button',{className:'btn g',textContent:'🔊 ฟังอีกครั้ง',onclick:()=>speak(p.name+'. '+p.info)}));
   $('info').classList.add('show');
@@ -1971,9 +2212,9 @@ function showInfo(id){
 const hideInfo=()=>$('info').classList.remove('show');
 $('infoX').onclick=()=>{ dismissed=here; hideInfo(); };
 function updateHud(){
-  $('hCoins').textContent='🪙 '+prog.coins; $('hMerit').textContent='🙏 '+prog.merit;
+  $('hCoinsN').textContent=prog.coins; $('hMerit').textContent='🙏 '+prog.merit;
   const sp=stampPlaces(); $('hStamps').textContent=`⭐ ${sp.filter(p=>prog.stamps[p.id]).length}/${sp.length}`;
-  $('hQuiz').textContent=`❓ ${solvedAll()}/${config.quiz.length}`;
+  const qs=qStat(); $('hQuiz').textContent=`❓ ${qs.first+qs.fix}/${qs.total}`+(qs.left?' · เหลือ '+qs.left:'');
   const nx=activeMissions().find(m=>!prog.done[m.id]);
   $('next').textContent=nx?`🎯 ${nx.title}`:'✅ ทำภารกิจครบแล้ว!';
   $('next').onclick=()=>{ if(nx){ const pid=missionPlace(nx); if(pid) goPlace(pid); else toast('ภารกิจนี้ทำได้ทุกที่'); } };
@@ -2108,10 +2349,16 @@ function drawMap(cv,base,big){
 }
 function openMap(){
   const L=$('placeList'); L.innerHTML='';
-  config.places.forEach(p=>{ const n=quizPool(p.id).length, B=BI[p.id];
-    L.append(el('div',{className:'item'+(prog.stamps[p.id]?' done':'')},el('span',{className:'ic',textContent:p.icon}),
-      el('span',{className:'t',textContent:p.name+(B?' ('+B.n+' ชั้น)':'')+(prog.stamps[p.id]?' ⭐':'')+(n?` · ❓${solvedIn(p.id)}/${n}`:'')}),
-      el('button',{textContent:'พาไป',onclick:()=>{ hide('mapOv'); goPlace(p.id); }}))); });
+  config.places.forEach(p=>{ const pool=quizPool(p.id), B=BI[p.id];
+    const left=pool.filter(q=>!prog.quiz.solved[q.q]).length;
+    const row=el('div',{className:'item'+(prog.stamps[p.id]?' done':''),style:'flex-wrap:wrap'},
+      el('span',{className:'ic',textContent:p.icon}),
+      el('span',{className:'t',textContent:p.name+(B?' ('+B.n+' ชั้น)':'')+(prog.stamps[p.id]?' ⭐':'')+(pool.length?' · ❓'+(pool.length-left)+'/'+pool.length:'')+(left?' เหลือ '+left:'')}),
+      el('button',{textContent:'พาไป',onclick:()=>{ hide('mapOv'); goPlace(p.id); }}));
+    if(B&&B.n>1){ const fr=el('div',{className:'flrow',style:'width:100%'});
+      for(let i=0;i<B.n;i++) fr.append(el('button',{textContent:'ชั้น '+(i+1),onclick:()=>{ hide('mapOv'); i?goPlaceFloor(p.id,i):goPlace(p.id); }}));
+      row.append(fr); }
+    L.append(row); });
   show('mapOv'); drawMap($('big'),bigBase,true);
 }
 $('big').addEventListener('click',e=>{
@@ -2152,11 +2399,21 @@ function renderDash(){
       el('button',{className:'btn o sm',textContent:'เปลี่ยนตัวละคร',onclick:()=>{ hide('dashOv'); openCreator(); }}),
       el('button',{className:'btn b sm',textContent:'📥 CSV',onclick:exportCSV})));
     const k=el('div',{className:'kpis'});
-    [['🪙','เหรียญ',prog.coins],['🙏','บุญ',prog.merit],['⭐','สแตมป์',got+'/'+sp.length],['📋','ภารกิจ',md+'/'+ms.length],
-     ['❓','คำถาม',solvedAll()+'/'+config.quiz.length],['🎯','ความแม่นยำ',acc+'%'],['🎮','กิจกรรม',actT],
+    const QS=qStat();
+    [[' เหรียญ','เหรียญ',prog.coins],['🙏','บุญ',prog.merit],['⭐','สแตมป์',got+'/'+sp.length],['📋','ภารกิจ',md+'/'+ms.length],
+     ['✅','คะแนนจริง',QS.real+'/'+QS.max],['🔁','คะแนนแก้',QS.fixScore],['❓','ยังไม่ตอบ',QS.left],['🎯','ความแม่นยำ',acc+'%'],['🎮','กิจกรรม',actT],
      ['🏅','เหรียญตรา',bd+'/'+BADGES.length],['🪜','ชั้นสูงสุด',(Object.keys(prog.floors).length?Math.max.apply(null,Object.keys(prog.floors).map(f=>+f.slice(1)))+1:1)],
      ['⏱️','เวลาเล่น',fmtTime(prog.play)]].forEach(([i,l,v])=>k.append(el('div',{className:'kpi'},el('span',{textContent:i+' '+l}),el('b',{textContent:String(v)}))));
-    D.append(k); bar('⭐ สแตมป์',got,sp.length); bar('📋 ภารกิจ',md,ms.length); bar('❓ คำถาม',solvedAll(),config.quiz.length); bar('🏅 เหรียญตรา',bd,BADGES.length);
+    D.append(k); bar('⭐ สแตมป์',got,sp.length); bar('📋 ภารกิจ',md,ms.length);
+    bar('✅ คะแนนจริง (ตอบถูกครั้งแรก)',QS.real,QS.max); bar('📚 คะแนนรวม (จริง+แก้)',QS.real+QS.fixScore,QS.max); bar('🏅 เหรียญตรา',bd,BADGES.length);
+    if(QS.left) D.append(el('div',{className:'line',style:'margin-bottom:8px'},
+      el('button',{className:'btn v',textContent:'❓ ดูคำถามที่ยังไม่ได้ตอบ ('+QS.left+' ข้อ)',onclick:()=>{ hide('dashOv'); openTodo(); }})));
+    const SPT=el('div',{className:'kpis'});
+    [['🏀','ชู้ตบาส','hoop'],['🏐','ตบวอลเลย์','volley'],['⚽','เตะฟุตซอล','futsal']].forEach(([i,l,kk])=>{
+      const r=(prog.sport||{})[kk]||{t:0,h:0};
+      SPT.append(el('div',{className:'kpi'},el('span',{textContent:i+' '+l}),el('b',{textContent:r.h+'/'+r.t}),el('span',{textContent:r.t?Math.round(r.h/r.t*100)+'% สำเร็จ':'ยังไม่ได้เล่น'})));
+    });
+    D.append(el('div',{className:'sec',style:'font-size:16px;color:#e85d04;margin:6px 0 2px',textContent:'🏅 สถิติกีฬา'}),SPT);
     if(!storageOK) D.append(el('p',{className:'note',textContent:'⚠️ เบราว์เซอร์นี้ไม่อนุญาตให้บันทึกถาวร ความคืบหน้าจะหายเมื่อปิดหน้า'}));
   } else if(dashTab==='stamps'){
     D.append(el('p',{className:'hint',textContent:`สะสมแล้ว ${got} จาก ${sp.length} จุด`}));
@@ -2165,18 +2422,27 @@ function renderDash(){
       el('small',{textContent:ts?'ได้เมื่อ '+fmtDate(ts):'ยังไม่ได้'}),ts?null:el('button',{className:'mini2',textContent:'พาไป',onclick:()=>{ hide('dashOv'); goPlace(p.id); }}))); });
     D.append(G);
   } else if(dashTab==='mis'){
-    ms.forEach(m=>{ const d=prog.done[m.id], pid=missionPlace(m);
+    ms.forEach(m=>{ const d=prog.done[m.id], pid=missionPlace(m), mlv=(m.type==='action'&&ACTIONS[m.target]&&ACTIONS[m.target].lv)||0;
       D.append(el('div',{className:'item'+(d?' done':'')},el('span',{className:'ic',textContent:d?'✅':'⬜'}),
-        el('span',{className:'t',textContent:`${m.title} (+${m.reward}🪙)`+(d?' · '+fmtDate(d):'')}),
-        (!d&&pid&&LAYOUT[pid])?el('button',{textContent:'พาไป',onclick:()=>{ hide('dashOv'); goPlace(pid); }}):null)); });
+        el('span',{className:'t',textContent:`${m.title} (+${m.reward}เหรียญ)`+(d?' · '+fmtDate(d):'')}),
+        (!d&&pid&&LAYOUT[pid])?el('button',{textContent:mlv?'พาไปชั้น '+(mlv+1):'พาไป',onclick:()=>{ hide('dashOv'); mlv?goPlaceFloor(pid,mlv):goPlace(pid); }}):null)); });
     if(!ms.length) D.append(el('p',{className:'note',textContent:'ยังไม่มีภารกิจ'}));
   } else if(dashTab==='quiz'){
-    const k=el('div',{className:'kpis'}); [['ตอบทั้งหมด',q.total],['ตอบถูก',q.correct],['ความแม่นยำ',acc+'%'],['ข้อที่ผ่าน',solvedAll()+'/'+config.quiz.length]].forEach(([l,v])=>k.append(el('div',{className:'kpi'},el('span',{textContent:l}),el('b',{textContent:String(v)})))); D.append(k);
+    const QS=qStat();
+    const k=el('div',{className:'kpis'});
+    [['✅ ถูกครั้งแรก',QS.first+' ข้อ',' real'],['🔁 ตอบแก้',QS.fix+' ข้อ',' fix'],['❓ ยังไม่ตอบ',QS.left+' ข้อ',''],
+     ['📊 คะแนนจริง',QS.real+'/'+QS.max,' real'],['📊 คะแนนแก้',QS.fixScore,' fix'],['🎯 ความแม่นยำ',acc+'%','']]
+      .forEach(([l,v,c])=>k.append(el('div',{className:'kpi'+c},el('span',{textContent:l}),el('b',{textContent:String(v)}))));
+    D.append(k);
+    D.append(el('p',{className:'note',textContent:'คะแนนจริง = ตอบถูกตั้งแต่ครั้งแรก (ข้อละ '+SC_FIRST+' คะแนน) · คะแนนแก้ = เคยตอบผิดแล้วกลับมาตอบถูก (ข้อละ '+SC_FIX+' คะแนน) เก็บแยกกันคนละช่อง'}));
+    if(QS.left) D.append(el('div',{className:'line',style:'margin-bottom:10px'},el('button',{className:'btn v',textContent:'❓ คำถามที่ยังไม่ได้ตอบ ('+QS.left+')',onclick:()=>{ hide('dashOv'); openTodo(); }})));
     D.append(el('b',{textContent:'สรุปแยกตามสถานที่'}));
-    const T1=el('table',{className:'t'}); T1.append(el('tr',null,el('th',{textContent:'สถานที่'}),el('th',{textContent:'ผ่าน'}),el('th',{textContent:'ตอบ/ถูก'}),el('th',{textContent:''})));
-    config.places.forEach(p=>{ const n=quizPool(p.id).length; if(!n) return; const b=q.by[p.id]||{total:0,correct:0}, s=solvedIn(p.id);
-      T1.append(el('tr',null,el('td',{textContent:p.icon+' '+p.name}),el('td',{textContent:`${s}/${n}`+(s>=n?' 🎓':'')}),el('td',{textContent:`${b.total}/${b.correct}`}),
-        el('td',null,s<n?el('button',{className:'mini2',textContent:'พาไป',onclick:()=>{ hide('dashOv'); goPlace(p.id); }}):null))); });
+    const T1=el('table',{className:'t'}); T1.append(el('tr',null,el('th',{textContent:'สถานที่'}),el('th',{textContent:'ถูกครั้งแรก'}),el('th',{textContent:'แก้'}),el('th',{textContent:'เหลือ'}),el('th',{textContent:''})));
+    config.places.forEach(p=>{ const pool=quizPool(p.id); if(!pool.length) return;
+      const f=pool.filter(x=>prog.quiz.first[x.q]).length, fx=pool.filter(x=>prog.quiz.fix[x.q]).length, lf=pool.length-f-fx;
+      T1.append(el('tr',null,el('td',{textContent:p.icon+' '+p.name}),el('td',{textContent:f+'/'+pool.length}),el('td',{textContent:String(fx)}),
+        el('td',{textContent:lf?String(lf):'—'}),
+        el('td',null,lf?el('button',{className:'mini2',textContent:'พาไป',onclick:()=>{ hide('dashOv'); goPlace(p.id); }}):null))); });
     D.append(T1);
     D.append(el('b',{textContent:'ประวัติการตอบล่าสุด'}));
     const T=el('table',{className:'t'}); T.append(el('tr',null,el('th',{textContent:'สถานที่'}),el('th',{textContent:'คำถาม'}),el('th',{textContent:'คำตอบ'}),el('th',{textContent:'ผล'})));
@@ -2225,7 +2491,7 @@ function renderMis(){
     T.append(el('div',{className:'card'},
       el('div',{className:'line'},el('input',{type:'checkbox',checked:m.enabled,onchange:e=>m.enabled=e.target.checked}),inp(m,'title')),
       el('div',{className:'line'},tyS,tSel),
-      el('div',{className:'line'},'รางวัล',inp(m,'reward','number'),'🪙',el('button',{className:'mini',textContent:'ลบ',onclick:()=>{ draft.missions.splice(i,1); renderMis(); }}))));
+      el('div',{className:'line'},'รางวัล',inp(m,'reward','number'),' เหรียญ',el('button',{className:'mini',textContent:'ลบ',onclick:()=>{ draft.missions.splice(i,1); renderMis(); }}))));
   });
   T.append(el('button',{className:'btn o',textContent:'+ เพิ่มภารกิจ',onclick:()=>{ draft.missions.push({id:'m'+Date.now(),title:'ภารกิจใหม่',type:'visit',target:draft.places[0].id,reward:10,enabled:true}); renderMis(); }}));
 }
@@ -2305,13 +2571,14 @@ function setOverview(on){
   toast(on?'🔭 มุมมองทั้งโรงเรียน — ลากจอเพื่อหมุน':'🔎 กลับมุมมองปกติ');
 }
 $('bZoom').onclick=()=>setOverview(!overview);
+$('bTodo').onclick=openTodo; $('hQuiz').onclick=openTodo;
 $('bPhoto').onclick=photo; $('bDash').onclick=()=>openDash(); $('bGo').onclick=openMap; $('bChat').onclick=openChat;
 $('mini').onclick=openMap; $('aMap').onclick=openMap; $('aChat').onclick=toggleChat;
 $('aWai').onclick=()=>{ if(here==='shrine') ACT.wai(); else if(here==='founder') ACT.respect(); else { setPose('wai',2); sfx.pop(); toast('สวัสดีครับ/ค่ะ 🙏'); } };
 $('aSit').onclick=()=>{ if(pose.type==='sit'||pose.type==='meditate') pose={type:null,until:0}; else { stopNav(); setPose(here==='buddha'?'meditate':'sit',9999); } };
 $('aWave').onclick=()=>{ setPose('wave',2.2); sfx.pop(); };
 $('aTalk').onclick=talk;
-const HELP='🖥️ คอมพิวเตอร์\n• WASD / ลูกศร = เดิน · ลากเมาส์ = หมุนกล้อง · ล้อเมาส์ = ซูมเข้า-ออก (ซูมออกได้จนเห็นทั้งโรงเรียน)\n• คลิกพื้น = เดินไปจุดนั้น · M = แผนที่ · E = ข้อมูลสถานที่\n• F = ไหว้ · C = นั่ง · Q = โบกมือ · T = คุย · Y = แชท\n• R = ขึ้นชั้น · V = ลงชั้น (ต้องยืนที่บันได)\n\n📱 มือถือ/แท็บเล็ต\n• จอยด้านซ้าย = เดิน · ลากจอ = หมุนกล้อง · ถ่างสองนิ้ว = ซูม\n• แตะพื้น = เดินไปจุดนั้น · ปุ่ม ☰ มุมซ้ายบน = เมนูทั้งหมด\n• ปุ่มขึ้น/ลงชั้นจะโผล่มุมขวาเมื่อยืนที่บันได\n\n⭐ เดินไปถึงแต่ละจุดเพื่อรับสแตมป์ · ❓ ตอบคำถามประจำสถานที่\n🪜 ทุกอาคารเดินขึ้นได้ทุกชั้น ลองขึ้นไปดูสนามฟุตซอลและสนามบาสบนดาดฟ้า\n💬 แชท: ช่อง "ทั่วไป" คุยกับทุกคน · "เข้าห้องรหัส" ใช้คุยเฉพาะกลุ่มหรือส่วนตัว';
+const HELP='🖥️ คอมพิวเตอร์\n• WASD / ลูกศร = เดิน · ลากเมาส์ = หมุนกล้อง · ล้อเมาส์ = ซูมเข้า-ออก (ซูมออกได้จนเห็นทั้งโรงเรียน)\n• คลิกพื้น = เดินไปจุดนั้น · M = แผนที่ · E = ข้อมูลสถานที่\n• F = ไหว้ · C = นั่ง · Q = โบกมือ · T = คุย · Y = แชท · B = เล่นกีฬาในสนาม\n• R = ขึ้นชั้น · V = ลงชั้น (ต้องยืนที่บันได)\n\n📱 มือถือ/แท็บเล็ต\n• จอยด้านซ้าย = เดิน · ลากจอ = หมุนกล้อง · ถ่างสองนิ้ว = ซูม\n• แตะพื้น = เดินไปจุดนั้น · ปุ่ม ☰ มุมซ้ายบน = เมนูทั้งหมด\n• ปุ่มขึ้น/ลงชั้นจะโผล่มุมขวาเมื่อยืนที่บันได\n\n⭐ เดินไปถึงแต่ละจุดเพื่อรับสแตมป์ · ❓ ตอบคำถามประจำสถานที่\n🪜 ทุกอาคารเดินขึ้นได้ทุกชั้น · ดาดฟ้าชั้น 3 อาคาร 100 ปี = สนามฟุตซอล (มีลูกบอลวางอยู่ กดปุ่มสีชมพูมุมขวาหรือกด B เพื่อเตะ) · ดาดฟ้าชั้น 3 อาคาร 4 = สนามบาส\n💬 แชท: ช่อง "ทั่วไป" คุยกับทุกคน · "เข้าห้องรหัส" ใช้คุยเฉพาะกลุ่มหรือส่วนตัว';
 $('bHelp').onclick=()=>showDialog('❔ วิธีเล่น',HELP,[{label:'เข้าใจแล้ว'}]);
 const keys={};
 addEventListener('keydown',e=>{
@@ -2323,6 +2590,7 @@ addEventListener('keydown',e=>{
   else if(e.code==='KeyF') $('aWai').click(); else if(e.code==='KeyC') $('aSit').click();
   else if(e.code==='KeyQ') $('aWave').click(); else if(e.code==='KeyT') talk();
   else if(e.code==='KeyY') toggleChat(); else if(e.code==='KeyR') changeFloor(1); else if(e.code==='KeyV') changeFloor(-1);
+  else if(e.code==='KeyB') playSport();
   if(e.code.startsWith('Arrow')||e.code==='Space') e.preventDefault();
 });
 addEventListener('keyup',e=>{ keys[e.code]=false; });
@@ -2409,7 +2677,7 @@ $('startBtn').onclick=()=>{
    16) ลูปเกม
    ===================================================================== */
 function lerpAngle(a,b,k){ const d=((b-a+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI; return a+d*k; }
-const clock=new THREE.Clock(); let walk=0, lastStep=0, navT=0, saveT=0, ambT=0, netT=0, nextChirp=0, nextLight=now()+8, flashT=0, floorT=0;
+const clock=new THREE.Clock(); let walk=0, lastStep=0, navT=0, saveT=0, ambT=0, netT=0, nextChirp=0, nextLight=now()+8, flashT=0, floorT=0, nextTodo=now()+75;
 function loop(){
   requestAnimationFrame(loop);
   const dt=Math.min(clock.getDelta(),0.05), t=clock.elapsedTime, T=now(), P=player.position;
@@ -2419,14 +2687,21 @@ function loop(){
   if(!uiOpen&&!typing){ f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-jy; r=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+jx; }
   let mx=0,mz=0; const L=Math.hypot(f,r);
   if(L>0.15){ if(nav.path.length) stopNav(); if(L>1){ f/=L; r/=L; } const sy=Math.sin(camYaw), cy=Math.cos(camYaw); mx=cy*r-sy*f; mz=-sy*r-cy*f; }
-  else if(nav.path.length&&!uiOpen){ const q=nav.path[0], dx=q[0]-P.x, dz=q[1]-P.z, d=Math.hypot(dx,dz); if(d<0.35){ nav.path.shift(); if(!nav.path.length) arrive(); } else { mx=dx/d; mz=dz/d; } }
+  else if(nav.path.length&&!uiOpen){ const q=nav.path[0], dx=q[0]-P.x, dz=q[1]-P.z, d=Math.hypot(dx,dz); if(d<0.24){ nav.path.shift(); if(!nav.path.length) arrive(); } else { mx=dx/d; mz=dz/d; } }
   const speed=config.walkSpeed*(T<boostUntil?1.6:1), moving=mx!==0||mz!==0; movingNow=moving;
   if(moving){
     if(pose.type&&pose.type!=='wave') pose={type:null,until:0};
     const ox=P.x, oz=P.z, nx=P.x+mx*speed*dt, nz=P.z+mz*speed*dt;
     if(!blocked(nx,P.z,0.4,playerLv,playerB)) P.x=nx;
     if(!blocked(P.x,nz,0.4,playerLv,playerB)) P.z=nz;
-    if(nav.path.length){ if(Math.hypot(P.x-ox,P.z-oz)<speed*dt*0.25){ nav.stuck+=dt; if(nav.stuck>0.7){ nav.stuck=0; if(++nav.replan>3){ toast('ไปต่อไม่ได้ ลองเลือกจุดใหม่'); stopNav(); } else replan(); } } else nav.stuck=0; }
+    if(nav.path.length&&P.x===ox&&P.z===oz){            // ติดมุม: ลองเลี่ยงเป็นมุมเฉียง
+      const base=Math.atan2(mx,mz), st=speed*dt;
+      for(const ang of [0.6,-0.6,1.1,-1.1,1.7,-1.7,2.4,-2.4]){
+        const sx=Math.sin(base+ang)*st, sz2=Math.cos(base+ang)*st;
+        if(!blocked(P.x+sx,P.z+sz2,0.4,playerLv,playerB)){ P.x+=sx; P.z+=sz2; break; } }
+    }
+    if(nav.path.length){ if(Math.hypot(P.x-ox,P.z-oz)<speed*dt*0.25){ nav.stuck+=dt; if(nav.stuck>0.7){ nav.stuck=0;
+      if(++nav.replan>4){ const cb=nav.cb; toast('ไปต่อไม่ได้ ลองเลือกจุดใหม่'); stopNav(); if(cb) cb(false); } else replan(); } } else nav.stuck=0; }
     player.rotation.y=lerpAngle(player.rotation.y,Math.atan2(mx,mz),Math.min(1,dt*12));
     walk+=dt*speed*1.7;
     const st=Math.floor(walk/Math.PI); if(st!==lastStep){ lastStep=st; if(started) sfx.step(); }
@@ -2497,6 +2772,8 @@ function loop(){
   for(const id in quizMarks){ const m=quizMarks[id]; if(m.visible) m.position.y=2.05+Math.sin(t*2.5+m.position.x)*0.15; }
   if(pin.visible) pin.position.y=1.7+Math.sin(t*4)*0.2;
   updateBall(dt);
+  for(const k in courtBall){ const cb=courtBall[k];
+    if(cb.m.visible){ cb.m.position.y=cb.home[1]+Math.abs(Math.sin(t*2.2+cb.ph))*0.18; cb.m.rotation.y=t*0.8; } }
   if(S==='rain'&&T>nextLight){ nextLight=T+rand(9,22); flashT=0.18; setTimeout(()=>{ if(started&&soundMode<2) sfx.thunder(); },rand(400,1400)); }
   hemi.intensity=flashT>0?(flashT-=dt,baseHemi+4):baseHemi;
   if(started&&soundMode<2&&TM!=='night'&&S!=='rain'&&T>nextChirp){ nextChirp=T+rand(2.5,7); sfx.chirp(); }
@@ -2523,6 +2800,9 @@ function loop(){
     if(cur!==here){ here=cur; if(cur) enterPlace(cur); else { dismissed=null; hideInfo(); } }
     prog.play+=dt; saveT+=dt; if(saveT>10){ saveT=0; saveProg(); }
   }
+  if(started&&T>nextTodo&&!document.querySelector('.ov.show')){ nextTodo=T+150;
+    const L2=todoList(); if(L2.length){ const q=L2.reduce((a,b2)=>a+b2.left,0);
+      toast('❓ ยังเหลือคำถามอีก '+q+' ข้อ — กดปุ่ม ❓ ด้านบนเพื่อดูและพาไป'); } }
   $('boost').style.display=T<boostUntil?'block':'none';
   navT+=dt; if(navT>0.3){ navT=0; updateNavText(); }
   drawMap($('mini'),miniBase,false);
